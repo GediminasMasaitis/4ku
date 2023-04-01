@@ -80,7 +80,6 @@ struct [[nodiscard]] Stack {
     Move moves[256];
     Move quiets_evaluated[256];
     int64_t move_scores[256];
-    Move move;
     Move killer;
     int score;
 };
@@ -764,7 +763,6 @@ int alphabeta(Position &pos,
             if (score > alpha) {
                 tt_flag = Exact;
                 alpha = score;
-                stack[ply].move = move;
             }
         }
 
@@ -814,23 +812,9 @@ int alphabeta(Position &pos,
 // minify disable filter delete
 
 // minify enable filter delete
-void print_pv(const Position &pos, const Move move, vector<u64> &hash_history) {
-    // Check move pseudolegality
-    if (!is_pseudolegal_move(pos, move)) {
-        return;
-    }
-
-    // Check move legality
-    auto npos = pos;
-    if (!makemove(npos, move)) {
-        return;
-    }
-
-    // Print current move
-    cout << " " << move_str(move, pos.flipped);
-
+void print_pv(const Position &pos, vector<u64> &hash_history) {
     // Probe the TT in the resulting position
-    const u64 tt_key = get_hash(npos);
+    const u64 tt_key = get_hash(pos);
     const TT_Entry &tt_entry = transposition_table[tt_key % num_tt_entries];
 
     // Only continue if the move was valid and comes from a PV search
@@ -845,13 +829,27 @@ void print_pv(const Position &pos, const Move move, vector<u64> &hash_history) {
         }
     }
 
+    // Check move pseudolegality
+    if (!is_pseudolegal_move(pos, tt_entry.move)) {
+        return;
+    }
+
+    // Check move legality
+    auto npos = pos;
+    if (!makemove(npos, tt_entry.move)) {
+        return;
+    }
+
+    // Print current move
+    cout << " " << move_str(tt_entry.move, pos.flipped);
+
     hash_history.emplace_back(tt_key);
-    print_pv(npos, tt_entry.move, hash_history);
+    print_pv(npos, hash_history);
     hash_history.pop_back();
 }
 // minify disable filter delete
 
-auto iteratively_deepen(Position &pos,
+void iteratively_deepen(Position &pos,
                         vector<u64> &hash_history,
                         // minify enable filter delete
                         int thread_id,
@@ -910,7 +908,7 @@ auto iteratively_deepen(Position &pos,
             // Not a lowerbound - a fail low won't have a meaningful PV.
             if (newscore > score - window) {
                 cout << " pv";
-                print_pv(pos, stack[0].move, hash_history);
+                print_pv(pos, hash_history);
             }
             cout << "\n";
 
@@ -938,7 +936,6 @@ auto iteratively_deepen(Position &pos,
             break;
         }
     }
-    return stack[0].move;
 }
 
 // minify enable filter delete
@@ -1151,21 +1148,21 @@ int main(
                                        stop);
                 });
             }
-            const auto best_move = iteratively_deepen(pos,
-                                                      hash_history,
-                                                      // minify enable filter delete
-                                                      0,
-                                                      false,
-                                                      // minify disable filter delete
-                                                      start,
-                                                      allocated_time,
-                                                      stop);
+            iteratively_deepen(pos,
+                               hash_history,
+                               // minify enable filter delete
+                               0,
+                               false,
+                               // minify disable filter delete
+                               start,
+                               allocated_time,
+                               stop);
             stop = true;
             for (int i = 1; i < thread_count; ++i) {
                 threads[i - 1].join();
             }
-
-            cout << "bestmove " << move_str(best_move, pos.flipped) << "\n";
+            cout << "bestmove " << move_str(transposition_table[get_hash(pos) % num_tt_entries].move, pos.flipped)
+                 << "\n";
         } else if (word == "position") {
             // Set to startpos
             pos = Position();
