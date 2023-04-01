@@ -573,7 +573,7 @@ int alphabeta(Position &pos,
             if (depth < 7) {
                 const int margins[] = {0, 50, 100, 200, 300, 500, 800};
                 if (static_eval - margins[depth - improving] >= beta) {
-                    return beta;
+                    return static_eval;
                 }
             }
 
