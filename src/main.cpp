@@ -716,10 +716,11 @@ int alphabeta(Position &pos,
         } else {
             // Late move reduction
             int reduction = depth > 2 && num_moves_evaluated > 4 && !gain
-                                ? 1 + num_moves_evaluated / 14 + depth / 17 + (alpha == beta - 1) - improving +
-                                      (hh_table[pos.flipped][move.from][move.to] < 0) -
-                                      (hh_table[pos.flipped][move.from][move.to] > 0) +
-                                      (!(no_move == tt_move) && piece_on(pos, tt_move.to))
+                                ? max(0,
+                                      1 + num_moves_evaluated / 14 + depth / 17 + (alpha == beta - 1) - improving +
+                                          (hh_table[pos.flipped][move.from][move.to] < 0) -
+                                          (hh_table[pos.flipped][move.from][move.to] > 0) -
+                                          (!(no_move == tt_move) && !piece_on(pos, tt_move.to)))
                                 : 0;
 
         zero_window:
