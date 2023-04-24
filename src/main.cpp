@@ -920,7 +920,8 @@ auto iteratively_deepen(Position &pos,
         // minify disable filter delete
 
         if (newscore >= score + window || newscore <= score - window) {
-            window <<= ++research;
+            research++;
+            window *= 2;
             score = newscore;
             goto research;
         }
