@@ -585,7 +585,7 @@ int alphabeta(Position &pos,
                 if (-alphabeta(npos,
                                -beta,
                                -beta + 1,
-                               depth - 4 - depth / 6 - min((static_eval - beta) / 200, 3),
+                               depth - 4 - depth / 8 - (static_eval - beta) / 256,
                                ply + 1,
                                // minify enable filter delete
                                nodes,
