@@ -625,6 +625,7 @@ int alphabeta(Position &pos,
     int num_moves_evaluated = 0;
     int num_quiets_evaluated = 0;
     int best_score = -inf;
+    int alpha_improve_gain = -inf;
     Move best_move{};
 
     auto &moves = stack[ply].moves;
@@ -759,6 +760,7 @@ int alphabeta(Position &pos,
             if (score > alpha) {
                 tt_flag = Exact;
                 alpha = score;
+                alpha_improve_gain = gain;
                 stack[ply].move = move;
             }
         }
@@ -766,11 +768,6 @@ int alphabeta(Position &pos,
         if (alpha >= beta) {
             tt_flag = Lower;
             if (!gain) {
-                hh_table[pos.flipped][move.from][move.to] += depth * depth;
-                for (int j = 0; j < num_quiets_evaluated - 1; ++j) {
-                    hh_table[pos.flipped][stack[ply].quiets_evaluated[j].from][stack[ply].quiets_evaluated[j].to] -=
-                        depth * depth;
-                }
                 stack[ply].killer = move;
             }
             break;
@@ -782,6 +779,14 @@ int alphabeta(Position &pos,
         }
     }
     hash_history.pop_back();
+
+    if (!alpha_improve_gain) {
+        hh_table[pos.flipped][best_move.from][best_move.to] += depth * depth * 2;
+        for (int j = 0; j < num_quiets_evaluated; ++j) {
+            hh_table[pos.flipped][stack[ply].quiets_evaluated[j].from][stack[ply].quiets_evaluated[j].to] -=
+                depth * depth;
+        }
+    }
 
     // Return mate or draw scores if no moves found
     if (best_score == -inf) {
