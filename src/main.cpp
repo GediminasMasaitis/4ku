@@ -677,15 +677,16 @@ int alphabeta(Position &pos,
             break;
         }
 
-        // Forward futility pruning
-        if (!in_qsearch && !in_check && !(move == tt_move) && static_eval + 150 * depth + gain < alpha) {
-            best_score = alpha;
-            break;
-        }
-
         auto npos = pos;
         if (!makemove(npos, move)) {
             continue;
+        }
+
+        // Forward futility pruning
+        if (!in_qsearch && !in_check && !(move == tt_move) && static_eval + 150 * depth + gain < alpha &&
+            !is_attacked(npos, lsb(npos.colour[0] & npos.pieces[King]))) {
+            best_score = alpha;
+            break;
         }
 
         // minify enable filter delete
