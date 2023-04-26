@@ -859,15 +859,15 @@ auto iteratively_deepen(Position &pos,
     // minify enable filter delete
     int64_t nodes = 0;
     // minify disable filter delete
-
     int score = 0;
     for (int i = 1; i < 128; ++i) {
-        auto window = 40;
+        int alpha = score - 40;
+        int beta = score + 40;
         auto research = 0;
     research:
-        const auto newscore = alphabeta(pos,
-                                        score - window,
-                                        score + window,
+        score = alphabeta(pos,
+                                        alpha,
+                                        beta,
                                         i,
                                         0,
                                         // minify enable filter delete
@@ -890,10 +890,10 @@ auto iteratively_deepen(Position &pos,
 
             cout << "info";
             cout << " depth " << i;
-            cout << " score cp " << newscore;
-            if (newscore >= score + window) {
+            cout << " score cp " << score;
+            if (score >= beta) {
                 cout << " lowerbound";
-            } else if (newscore <= score - window) {
+            } else if (score <= alpha) {
                 cout << " upperbound";
             }
             cout << " time " << elapsed;
@@ -902,7 +902,7 @@ auto iteratively_deepen(Position &pos,
                 cout << " nps " << nodes * 1000 / elapsed;
             }
             // Not a lowerbound - a fail low won't have a meaningful PV.
-            if (newscore > score - window) {
+            if (score > alpha) {
                 cout << " pv";
                 print_pv(pos, stack[0].move, hash_history);
             }
@@ -919,13 +919,13 @@ auto iteratively_deepen(Position &pos,
         }
         // minify disable filter delete
 
-        if (newscore >= score + window || newscore <= score - window) {
-            window <<= ++research;
-            score = newscore;
+        if (score >= beta || score <= alpha) {
+            research++;
+            alpha = score - 40 * research;
+            beta = score + 40 * research;
             goto research;
         }
 
-        score = newscore;
 
         // Early exit after completed ply
         if (!research && now() >= start_time + allocated_time / 10) {
