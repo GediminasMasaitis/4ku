@@ -921,13 +921,13 @@ auto iteratively_deepen(Position &pos,
 
         if (score <= alpha) {
             research++;
-            alpha = score - 40 * research;
+            alpha = score - 40 * (research + 1);
             goto research;
         }
 
         if (score >= beta) {
             research++;
-            beta = score + 40 * research;
+            beta = score + 40 * (research + 1);
             goto research;
         }
 
