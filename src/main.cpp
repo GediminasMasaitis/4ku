@@ -861,8 +861,8 @@ auto iteratively_deepen(Position &pos,
     // minify disable filter delete
     int score = 0;
     for (int i = 1; i < 128; ++i) {
-        int alpha = score - 40;
-        int beta = score + 40;
+        int alpha = score - 20;
+        int beta = score + 20;
         auto research = 0;
     research:
         score = alphabeta(pos,
@@ -921,13 +921,13 @@ auto iteratively_deepen(Position &pos,
 
         if (score <= alpha) {
             research++;
-            alpha = score - 40 * (research + 1);
+            alpha = score - 20 * (research + 1);
             goto research;
         }
 
         if (score >= beta) {
             research++;
-            beta = score + 40 * (research + 1);
+            beta = score + 20 * (research + 1);
             goto research;
         }
 
