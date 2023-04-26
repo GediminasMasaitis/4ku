@@ -866,18 +866,18 @@ auto iteratively_deepen(Position &pos,
         auto research = 0;
     research:
         score = alphabeta(pos,
-                                        alpha,
-                                        beta,
-                                        i,
-                                        0,
-                                        // minify enable filter delete
-                                        nodes,
-                                        // minify disable filter delete
-                                        start_time + allocated_time,
-                                        stop,
-                                        stack,
-                                        hh_table,
-                                        hash_history);
+                          alpha,
+                          beta,
+                          i,
+                          0,
+                          // minify enable filter delete
+                          nodes,
+                          // minify disable filter delete
+                          start_time + allocated_time,
+                          stop,
+                          stack,
+                          hh_table,
+                          hash_history);
 
         // Hard time limit exceeded
         if (now() >= start_time + allocated_time || stop) {
@@ -919,13 +919,17 @@ auto iteratively_deepen(Position &pos,
         }
         // minify disable filter delete
 
-        if (score >= beta || score <= alpha) {
+        if (score <= alpha) {
             research++;
             alpha = score - 40 * research;
-            beta = score + 40 * research;
             goto research;
         }
 
+        if (score >= beta) {
+            research++;
+            beta = score + 40 * research;
+            goto research;
+        }
 
         // Early exit after completed ply
         if (!research && now() >= start_time + allocated_time / 10) {
