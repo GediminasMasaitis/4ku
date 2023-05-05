@@ -678,7 +678,7 @@ int alphabeta(Position &pos,
         }
 
         // Forward futility pruning
-        if (!in_qsearch && !in_check && !(move == tt_move) && static_eval + 150 * depth + gain < alpha) {
+        if (!in_qsearch && !in_check && num_moves_evaluated > 0 && static_eval + 150 * depth + gain < alpha) {
             best_score = alpha;
             break;
         }
