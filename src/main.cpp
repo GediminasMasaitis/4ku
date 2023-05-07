@@ -928,7 +928,7 @@ auto iteratively_deepen(Position &pos,
         score = newscore;
 
         // Early exit after completed ply
-        if (!research && now() >= start_time + allocated_time / 10) {
+        if (!research && now() >= start_time + allocated_time / 6) {
             break;
         }
     }
@@ -1127,7 +1127,7 @@ int main(
             // minify disable filter delete
 
             const auto start = now();
-            const auto allocated_time = (pos.flipped ? btime : wtime) / 3;
+            const auto allocated_time = (pos.flipped ? btime : wtime) / 5;
 
             // Lazy SMP
             vector<thread> threads;
