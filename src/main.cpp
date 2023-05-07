@@ -1127,7 +1127,7 @@ int main(
             // minify disable filter delete
 
             const auto start = now();
-            const auto allocated_time = (pos.flipped ? btime : wtime) / 3;
+            const auto allocated_time = (pos.flipped ? btime : wtime) / 4;
 
             // Lazy SMP
             vector<thread> threads;
