@@ -789,7 +789,9 @@ int alphabeta(Position &pos,
     }
 
     // Save to TT
-    tt_entry = {tt_key, best_move == no_move ? tt_move : best_move, best_score, in_qsearch ? 0 : depth, tt_flag};
+    if (num_moves_evaluated > 0) {
+        tt_entry = {tt_key, best_move == no_move ? tt_move : best_move, best_score, in_qsearch ? 0 : depth, tt_flag};
+    }
 
     return alpha;
 }
