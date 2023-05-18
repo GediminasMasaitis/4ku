@@ -789,7 +789,7 @@ int alphabeta(Position &pos,
     }
 
     // Save to TT
-    if (num_moves_evaluated > 0) {
+    if (num_moves_evaluated > 0 || in_qsearch) {
         tt_entry = {tt_key, best_move == no_move ? tt_move : best_move, best_score, in_qsearch ? 0 : depth, tt_flag};
     }
 
