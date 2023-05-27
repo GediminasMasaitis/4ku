@@ -749,7 +749,9 @@ int alphabeta(Position &pos,
         }
 
         // Late move pruning based on quiet move count
-        if (!in_check && alpha == beta - 1 && num_quiets_evaluated > (3 + depth * depth) / (2 - improving))
+        if (!in_check && alpha == beta - 1 &&
+            (num_quiets_evaluated > (3 + depth * depth) / (2 - improving) ||
+             num_moves_evaluated > (5 + 2 * depth * depth)))
             break;
     }
     hash_history.pop_back();
