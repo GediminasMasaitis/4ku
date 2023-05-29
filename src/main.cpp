@@ -599,6 +599,29 @@ int alphabeta(Position &pos,
         }
     }
 
+    // Internal iterative deepening
+    if (depth > 3 && tt_entry.key != tt_key && alpha != beta - 1) {
+        alphabeta(pos,
+                  alpha,
+                  beta,
+                  depth - 2,
+                  ply,
+                  // minify enable filter delete
+                  nodes,
+                  // minify disable filter delete
+                  stop_time,
+                  stop,
+                  stack,
+                  hh_table,
+                  hash_history,
+                  do_null);
+
+        // Since a TT always-replace scheme is used,
+        // and the last searched position is the current one
+        // we assume that here always tt_entry.key == tt_key
+        tt_move = tt_entry.move;
+    }
+
     hash_history.emplace_back(tt_key);
     uint16_t tt_flag = Upper;
 
