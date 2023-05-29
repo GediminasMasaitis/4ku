@@ -600,7 +600,7 @@ int alphabeta(Position &pos,
     }
 
     // Internal iterative deepening
-    if (depth > 3 && tt_entry.key != tt_key && alpha != beta - 1) {
+    if (depth > 3 && (tt_entry.key != tt_key || tt_entry.flag != Exact) && alpha != beta - 1) {
         alphabeta(pos,
                   alpha,
                   beta,
