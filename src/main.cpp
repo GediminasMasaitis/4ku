@@ -81,7 +81,6 @@ struct [[nodiscard]] Stack {
     Move quiets_evaluated[256];
     int64_t move_scores[256];
     Move move;
-    Move killer;
     int score;
 };
 
@@ -618,8 +617,6 @@ int alphabeta(Position &pos,
                 const auto gain = max_material[moves[j].promo] + max_material[piece_on(pos, moves[j].to)];
                 if (gain)
                     move_scores[j] = gain + (1LL << 54);
-                else if (moves[j] == stack[ply].killer)
-                    move_scores[j] = 1LL << 50;
                 else
                     move_scores[j] = hh_table[pos.flipped][moves[j].from][moves[j].to];
             }
@@ -744,7 +741,6 @@ int alphabeta(Position &pos,
                     hh_table[pos.flipped][stack[ply].quiets_evaluated[j].from][stack[ply].quiets_evaluated[j].to] -=
                         depth * depth;
                 }
-                stack[ply].killer = move;
             }
             break;
         }
