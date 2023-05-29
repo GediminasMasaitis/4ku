@@ -684,11 +684,12 @@ int alphabeta(Position &pos,
                                hash_history);
         } else {
             // Late move reduction
-            int reduction = depth > 2 && num_moves_evaluated > 4 && !gain
-                                ? 1 + num_moves_evaluated / 14 + depth / 17 + (alpha == beta - 1) - improving +
-                                      (hh_table[pos.flipped][move.from][move.to] < 0) -
-                                      (hh_table[pos.flipped][move.from][move.to] > 0)
-                                : 0;
+            int reduction = max(0,
+                                depth > 2 && num_moves_evaluated > 4 && !gain
+                                    ? 1 + num_moves_evaluated / 14 + depth / 17 + (alpha == beta - 1) - improving +
+                                          (hh_table[pos.flipped][move.from][move.to] < 0) -
+                                          (hh_table[pos.flipped][move.from][move.to] > 0)
+                                    : 0);
 
         zero_window:
             score = -alphabeta(npos,
