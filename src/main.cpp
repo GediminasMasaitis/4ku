@@ -544,7 +544,7 @@ int alphabeta(Position &pos,
     Move tt_move{};
     if (tt_entry.key == tt_key) {
         tt_move = tt_entry.move;
-        if (ply > 0 && tt_entry.depth >= depth) {
+        if (ply > 0 && tt_entry.depth >= depth && alpha == beta - 1) {
             if (tt_entry.flag == Upper && tt_entry.score <= alpha || tt_entry.flag == Lower && tt_entry.score >= beta ||
                 tt_entry.flag == Exact) {
                 return tt_entry.score;
