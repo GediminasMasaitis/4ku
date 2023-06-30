@@ -346,15 +346,15 @@ void generate_piece_moves(Move *const movelist,
 }
 
 const i32 phases[] = {0, 1, 1, 2, 4, 0};
-const i32 max_material[] = {127, 412, 441, 767, 1468, 0, 0};
-const i32 material[] = {S(106, 127), S(377, 412), S(394, 441), S(492, 767), S(977, 1468), 0};
+const i32 max_material[] = {128, 416, 440, 768, 1464, 0, 0};
+const i32 material[] = {S(13, 16), S(47, 52), S(49, 55), S(62, 96), S(122, 183), 0};
 const i32 pst_rank[][8] = {
     {0, S(-3, 0), S(-3, -1), S(-1, -1), S(2, 0), S(5, 2), 0, 0},
     {S(-6, -5), S(-4, -2), S(-1, 0), S(1, 3), S(5, 4), S(10, 1), S(6, -1), S(-11, -1)},
-    {S(-5, -3), S(-1, -2), S(1, 0), S(2, 2), S(3, 2), S(6, 1), S(2, 0), S(-8, 0)},
-    {S(-2, -2), S(-4, -3), S(-5, -2), S(-4, 0), S(-1, 1), S(3, 1), S(5, 2), S(8, 1)},
-    {S(-2, -11), S(0, -9), S(0, -4), S(-2, 2), S(-1, 6), S(3, 4), S(-1, 7), S(4, 4)},
-    {S(0, -5), S(0, -1), S(-2, 0), S(-5, 2), S(-2, 3), S(6, 2), S(3, 1), S(2, -4)},
+    {S(-5, -3), S(-1, -2), S(1, 0), S(2, 2), S(2, 2), S(6, 1), S(2, 0), S(-7, 0)},
+    {S(-2, -2), S(-4, -3), S(-4, -2), S(-4, 0), S(-1, 1), S(3, 1), S(5, 2), S(8, 1)},
+    {S(-2, -11), S(0, -9), S(0, -4), S(-2, 2), S(-1, 6), S(3, 5), S(-1, 7), S(4, 4)},
+    {S(0, -4), 0, S(-2, 1), S(-5, 3), S(-1, 4), S(6, 3), S(4, 2), S(2, -3)},
 };
 const i32 pst_file[][8] = {
     {S(-2, 0), S(-1, 1), S(-1, 0), S(0, -1), S(1, 0), S(2, 0), S(3, 0), S(-2, 0)},
@@ -362,21 +362,21 @@ const i32 pst_file[][8] = {
     {S(-3, -2), 0, S(1, 0), S(0, 2), S(0, 2), S(0, 1), S(2, -1), S(-1, -2)},
     {S(-1, 0), S(-2, 1), S(-1, 1), 0, S(1, -1), S(2, 0), S(2, 0), S(-1, -1)},
     {S(-3, -5), S(-2, -2), S(-1, 0), S(0, 1), S(0, 3), S(1, 3), S(3, 0), S(2, 0)},
-    {S(-2, -3), S(1, -1), S(-3, 1), S(-5, 2), S(-5, 2), S(-2, 1), S(1, 0), S(1, -3)},
+    {S(-1, -3), S(2, 0), S(-2, 2), S(-4, 2), S(-4, 3), S(-1, 2), S(2, 1), S(2, -2)},
 };
 const i32 open_files[][5] = {
-    {S(0, 2), S(-7, 16), S(28, 20), S(6, 18), S(-25, 8)},
-    {S(-4, -12), S(-12, -2), S(58, 11), S(-7, 39), S(-70, -4)},
+    {0, S(-1, 2), S(3, 2), S(1, 2), S(-3, 1)},
+    {S(-1, -2), S(-2, 0), S(7, 1), S(-1, 5), S(-9, 0)},
 };
-const i32 pawn_protection[] = {S(26, 13), S(5, 15), S(3, 6), S(10, 4), S(-9, 12), S(-35, 24)};
-const i32 passers[] = {S(-8, 11), S(16, 42), S(48, 105), S(197, 185)};
-const i32 pawn_passed_protected = S(15, 18);
-const i32 pawn_doubled = S(-15, -34);
-const i32 pawn_phalanx = S(12, 12);
-const i32 pawn_passed_blocked[] = {S(-8, -13), S(9, -37), S(9, -74), S(17, -97)};
-const i32 pawn_passed_king_distance[] = {S(2, -6), S(-4, 10)};
-const i32 bishop_pair = S(33, 65);
-const i32 king_shield[] = {S(42, -10), S(32, -9)};
+const i32 pawn_protection[] = {S(3, 2), S(1, 2), S(0, 1), S(1, 1), S(-1, 2), S(-4, 3)};
+const i32 passers[] = {S(-1, 1), S(2, 5), S(6, 13), S(24, 23)};
+const i32 pawn_passed_protected = S(2, 2);
+const i32 pawn_doubled = S(-2, -4);
+const i32 pawn_phalanx = S(1, 2);
+const i32 pawn_passed_blocked[] = {S(-1, -2), S(1, -5), S(1, -9), S(2, -12)};
+const i32 pawn_passed_king_distance[] = {S(0, -1), S(0, 1)};
+const i32 bishop_pair = S(4, 8);
+const i32 king_shield[] = {S(5, -1), S(4, -1)};
 const i32 pawn_attacked[] = {S(-64, -14), S(-155, -142)};
 
 [[nodiscard]] i32 eval(Position &pos) {
@@ -416,8 +416,8 @@ const i32 pawn_attacked[] = {S(-64, -14), S(-155, -142)};
                 const i32 file = sq % 8;
 
                 // Split quantized PSTs
-                score += pst_rank[p][rank] * 8;
-                score += pst_file[p][file] * 8;
+                score += pst_rank[p][rank];
+                score += pst_file[p][file];
 
                 // Pawn protection
                 const u64 piece_bb = 1ULL << sq;
@@ -473,9 +473,10 @@ const i32 pawn_attacked[] = {S(-64, -14), S(-155, -142)};
     }
 
     // Tapered eval with endgame scaling based on remaining pawn count of the stronger side
-    return ((short)score * phase +
-            (score + 0x8000 >> 16) * (16 + count(pos.colour[score < 0] & pos.pieces[Pawn])) / 24 * (24 - phase)) /
-           24;
+    return (((short)score * phase +
+             (score + 0x8000 >> 16) * (16 + count(pos.colour[score < 0] & pos.pieces[Pawn])) / 24 * (24 - phase)) /
+            24) *
+           8;
 }
 
 [[nodiscard]] u64 get_hash(const Position &pos) {
