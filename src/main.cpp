@@ -560,7 +560,7 @@ i32 alphabeta(Position &pos,
 
     // If static_eval <= tt_entry.score, tt_entry.flag has to be lower or exact for the condition to be true.
     // Otherwise, tt_entry.flag has to be upper or exact.
-    if (tt_entry.key == tt_key && tt_entry.flag + 1 & (static_eval <= tt_entry.score) + 1)
+    if (tt_entry.key == tt_key)
         static_eval = tt_entry.score;
 
     if (in_qsearch && static_eval > alpha) {
