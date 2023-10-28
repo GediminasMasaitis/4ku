@@ -354,8 +354,8 @@ void generate_piece_moves(Move *const movelist,
 }
 
 const i32 phases[] = {0, 1, 1, 2, 4, 0};
-const i32 max_material[] = {139, 449, 452, 841, 1674, 0, 0};
-const i32 material[] = {S(100, 139), S(329, 449), S(341, 452), S(455, 841), S(825, 1674), 0};
+const i32 max_material[] = {130, 447, 450, 838, 1668, 0, 0};
+const i32 material[] = {S(95, 130), S(331, 447), S(344, 450), S(458, 838), S(831, 1668), 0};
 const i32 pst_rank[][8] = {
     {0, S(-2, 0), S(-3, -1), S(-1, -1), S(1, 0), S(5, 2), 0, 0},
     {S(-4, -5), S(-2, -3), S(-1, -1), S(1, 3), S(3, 4), S(7, 1), S(5, 0), S(-11, 1)},
@@ -369,22 +369,22 @@ const i32 pst_file[][8] = {
     {S(-4, -3), S(-2, -1), S(0, 1), S(2, 3), S(2, 2), S(2, 0), S(1, -1), S(-1, -3)},
     {S(-2, 0), 0, S(1, 0), S(0, 1), S(0, 1), S(-1, 1), S(2, -1), S(0, -1)},
     {S(-2, 0), S(-2, 1), S(-1, 1), S(1, 0), S(1, -1), S(1, 0), S(2, 0), S(-1, -1)},
-    {S(-3, -4), S(-2, -2), S(-1, 0), S(0, 1), S(0, 2), S(1, 3), S(2, 1), S(3, -1)},
+    {S(-3, -4), S(-2, -2), S(-1, 0), S(0, 1), S(0, 2), S(1, 3), S(2, 2), S(3, -1)},
     {S(-2, -5), S(2, -1), S(-2, 1), S(-3, 2), S(-4, 2), S(-1, 1), S(2, -1), S(0, -5)},
 };
-const i32 open_files[][5] = {
-    {S(3, 4), S(-4, 20), S(20, 16), S(3, 19), S(-23, 10)},
-    {S(-3, -12), S(-11, 0), S(47, 0), S(-13, 35), S(-63, 1)},
+const i32 open_files[][6] = {
+    {S(6, -1), S(3, 5), S(-4, 21), S(21, 16), S(4, 20), S(-22, 10)},
+    {S(7, 10), S(-3, -12), S(-11, 0), S(47, 0), S(-14, 35), S(-63, 1)},
 };
-const i32 mobilities[] = {S(9, 5), S(8, 7), S(4, 4), S(4, 3), S(-5, -1)};
-const i32 pawn_protection[] = {S(24, 14), S(2, 16), S(8, 17), S(9, 8), S(-5, 23), S(-34, 26)};
-const i32 passers[] = {S(0, 15), S(29, 52), S(63, 126), S(209, 210)};
-const i32 pawn_passed_protected = S(13, 20);
-const i32 pawn_doubled_penalty = S(14, 38);
-const i32 pawn_phalanx = S(13, 12);
-const i32 pawn_passed_blocked_penalty[] = {S(10, 14), S(-5, 43), S(-9, 86), S(3, 101)};
+const i32 mobilities[] = {S(9, 5), S(8, 7), S(4, 4), S(4, 3), S(-5, 0)};
+const i32 pawn_protection[] = {S(24, 14), S(2, 15), S(8, 17), S(9, 8), S(-5, 22), S(-34, 26)};
+const i32 passers[] = {S(0, 15), S(30, 52), S(63, 125), S(210, 206)};
+const i32 pawn_passed_protected = S(13, 19);
+const i32 pawn_doubled_penalty = S(2, 26);
+const i32 pawn_phalanx = S(13, 11);
+const i32 pawn_passed_blocked_penalty[] = {S(10, 14), S(-6, 43), S(-9, 86), S(5, 100)};
 const i32 pawn_passed_king_distance[] = {S(1, -6), S(-4, 11)};
-const i32 bishop_pair = S(31, 72);
+const i32 bishop_pair = S(32, 71);
 const i32 king_shield[] = {S(35, -12), S(28, -8)};
 const i32 pawn_attacked_penalty[] = {S(64, 14), S(155, 142)};
 
@@ -433,6 +433,11 @@ const i32 pawn_attacked_penalty[] = {S(64, 14), S(155, 142)};
                 if (piece_bb & protected_by_pawns)
                     score += pawn_protection[p];
 
+                // Open or semi-open files
+                const u64 file_bb = 0x101010101010101ULL << file & ~piece_bb;
+                if (!(file_bb & pawns[0]))
+                    score += open_files[!(file_bb & pawns[1])][p];
+
                 if (p == Pawn) {
                     // Passed pawns
                     if (rank > 2 && !(0x101010101010101ULL << sq & (pawns[1] | attacked_by_pawns))) {
@@ -476,11 +481,6 @@ const i32 pawn_attacked_penalty[] = {S(64, 14), S(155, 142)};
                     // Use Queen mobilities for the king as a form of king safety.
                     // Don't consider squares attacked by opponent pawns.
                     score += mobilities[p - 1] * count(mobility & ~pos.colour[0] & ~attacked_by_pawns);
-
-                    // Open or semi-open files
-                    const u64 file_bb = 0x101010101010101ULL << file;
-                    if (!(file_bb & pawns[0]))
-                        score += open_files[!(file_bb & pawns[1])][p - 1];
 
                     if (p == King && piece_bb & 0xC3D7) {
                         // C3D7 = Reasonable king squares
