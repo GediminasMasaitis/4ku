@@ -354,38 +354,39 @@ void generate_piece_moves(Move *const movelist,
 }
 
 const i32 phases[] = {0, 1, 1, 2, 4, 0};
-const i32 max_material[] = {139, 449, 452, 841, 1674, 0, 0};
-const i32 material[] = {S(100, 139), S(329, 449), S(341, 452), S(455, 841), S(825, 1674), 0};
+const i32 max_material[] = {140, 449, 448, 839, 1664, 0, 0};
+const i32 material[] = {S(97, 140), S(337, 449), S(349, 448), S(458, 839), S(833, 1664), 0};
 const i32 pst_rank[][8] = {
-    {0, S(-2, 0), S(-3, -1), S(-1, -1), S(1, 0), S(5, 2), 0, 0},
-    {S(-4, -5), S(-2, -3), S(-1, -1), S(1, 3), S(3, 4), S(7, 1), S(5, 0), S(-11, 1)},
-    {S(-2, -2), S(1, -2), S(1, 0), S(1, 0), S(2, 1), S(4, 0), S(1, 0), S(-8, 2)},
+    {0, S(-2, 0), S(-2, -1), S(-1, -1), S(1, 0), S(4, 2), 0, 0},
+    {S(-4, -5), S(-3, -2), S(-1, -1), S(2, 3), S(5, 3), S(7, 1), S(5, 0), S(-11, 1)},
+    {S(-2, -2), S(0, -1), S(1, 0), S(2, 0), S(3, 0), S(4, 0), S(1, 0), S(-8, 2)},
     {S(-2, -4), S(-2, -4), S(-3, -2), S(-4, 1), S(-1, 2), S(3, 2), S(3, 3), S(6, 1)},
-    {S(1, -13), S(1, -10), S(0, -5), S(-1, 1), S(-1, 6), S(1, 5), S(-2, 9), S(1, 7)},
-    {S(0, -6), S(0, -2), S(-2, 0), S(-4, 3), S(-1, 4), S(5, 4), S(3, 3), S(4, -4)},
+    {S(1, -13), S(1, -10), S(0, -5), S(-1, 1), S(-1, 5), S(1, 6), S(-2, 9), S(1, 7)},
+    {S(0, -6), S(0, -2), S(-1, 0), S(-3, 3), S(-1, 4), S(5, 4), S(3, 3), S(4, -4)},
 };
 const i32 pst_file[][8] = {
     {S(-2, 1), S(-1, 1), S(-1, 0), S(0, -1), S(1, 0), S(2, 0), S(2, 0), S(-1, -1)},
-    {S(-4, -3), S(-2, -1), S(0, 1), S(2, 3), S(2, 2), S(2, 0), S(1, -1), S(-1, -3)},
+    {S(-5, -3), S(-2, -1), S(0, 1), S(2, 3), S(2, 2), S(2, 0), S(1, 0), S(-1, -3)},
     {S(-2, 0), 0, S(1, 0), S(0, 1), S(0, 1), S(-1, 1), S(2, -1), S(0, -1)},
     {S(-2, 0), S(-2, 1), S(-1, 1), S(1, 0), S(1, -1), S(1, 0), S(2, 0), S(-1, -1)},
-    {S(-3, -4), S(-2, -2), S(-1, 0), S(0, 1), S(0, 2), S(1, 3), S(2, 1), S(3, -1)},
-    {S(-2, -5), S(2, -1), S(-2, 1), S(-3, 2), S(-4, 2), S(-1, 1), S(2, -1), S(0, -5)},
+    {S(-3, -4), S(-2, -3), S(-1, 0), S(0, 1), S(0, 2), S(1, 3), S(2, 1), S(3, -1)},
+    {S(-2, -5), S(2, -2), S(-2, 1), S(-3, 2), S(-4, 2), S(-1, 1), S(2, -1), S(0, -5)},
 };
 const i32 open_files[][5] = {
-    {S(3, 4), S(-4, 20), S(20, 16), S(3, 19), S(-23, 10)},
-    {S(-3, -12), S(-11, 0), S(47, 0), S(-13, 35), S(-63, 1)},
+    {S(3, 5), S(-4, 21), S(20, 16), S(4, 16), S(-23, 10)},
+    {S(-1, -13), S(-9, -1), S(47, 0), S(-13, 33), S(-63, 1)},
 };
-const i32 mobilities[] = {S(9, 5), S(8, 7), S(4, 4), S(4, 3), S(-5, -1)};
-const i32 pawn_protection[] = {S(24, 14), S(2, 16), S(8, 17), S(9, 8), S(-5, 23), S(-34, 26)};
-const i32 passers[] = {S(0, 15), S(29, 52), S(63, 126), S(209, 210)};
-const i32 pawn_passed_protected = S(13, 20);
-const i32 pawn_doubled_penalty = S(14, 38);
+const i32 mobilities[] = {S(8, 5), S(8, 7), S(4, 4), S(4, 4), S(-5, -1)};
+const i32 pawn_protection[] = {S(23, 14), S(3, 15), S(8, 17), S(8, 9), S(-5, 23), S(-33, 26)};
+const i32 pawn_threat_penalty[] = {S(20, 1), S(22, 2), S(2, 15), S(10, -11), S(25, -4)};
+const i32 passers[] = {S(1, 14), S(31, 51), S(67, 124), S(211, 208)};
+const i32 pawn_passed_protected = S(12, 20);
+const i32 pawn_doubled_penalty = S(13, 38);
 const i32 pawn_phalanx = S(13, 12);
-const i32 pawn_passed_blocked_penalty[] = {S(10, 14), S(-5, 43), S(-9, 86), S(3, 101)};
-const i32 pawn_passed_king_distance[] = {S(1, -6), S(-4, 11)};
-const i32 bishop_pair = S(31, 72);
-const i32 king_shield[] = {S(35, -12), S(28, -8)};
+const i32 pawn_passed_blocked_penalty[] = {S(10, 14), S(-4, 43), S(-8, 86), S(4, 100)};
+const i32 pawn_passed_king_distance[] = {S(1, -6), S(-3, 11)};
+const i32 bishop_pair = S(32, 71);
+const i32 king_shield[] = {S(35, -12), S(27, -7)};
 const i32 pawn_attacked_penalty[] = {S(64, 14), S(155, 142)};
 
 [[nodiscard]] i32 eval(Position &pos) {
@@ -453,6 +454,10 @@ const i32 pawn_attacked_penalty[] = {S(64, 14), S(155, 142)};
                                      max(abs(kings[i] / 8 - rank - 1), abs(kings[i] % 8 - file));
                     }
                 } else {
+                    // Pawn threat
+                    if (north(piece_bb) & attacked_by_pawns)
+                        score -= pawn_threat_penalty[p - 1];
+
                     // Pawn attacks
                     if (piece_bb & attacked_by_pawns)
                         // If we're to move, we'll just lose some options and our tempo.
