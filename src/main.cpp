@@ -586,9 +586,6 @@ i32 alphabeta(Position &pos,
             // Otherwise, tt_entry.flag cannot be Upper (ie must be Lower or Exact).
             return tt_entry.score;
     }
-    // Internal iterative reduction
-    else
-        depth -= depth > 3;
 
     i32 static_eval = stack[ply].score = eval(pos);
     const i32 improving = ply > 1 && static_eval > stack[ply - 2].score;
@@ -635,6 +632,10 @@ i32 alphabeta(Position &pos,
                 return beta;
         }
     }
+
+    // Internal iterative reduction
+    if (tt_entry.key != tt_key)
+        depth -= depth > 3;
 
     hash_history.emplace_back(tt_key);
     uint16_t tt_flag = Upper;
