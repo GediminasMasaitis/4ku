@@ -687,6 +687,10 @@ i32 alphabeta(Position &pos,
             static_eval + 100 * depth + gain < alpha)
             break;
 
+        if (in_qsearch && !in_check && gain - max_material[piece_on(pos, move.from)] < -200 &&
+            is_attacked(pos, move.to))
+            continue;
+
         Position npos = pos;
         if (!makemove(npos, move))
             continue;
