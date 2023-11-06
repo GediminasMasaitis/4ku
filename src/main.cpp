@@ -83,6 +83,8 @@ struct [[nodiscard]] Stack {
     int64_t move_scores[256];
     Move move;
     Move killer;
+    i32 piece;
+    i32 to;
     i32 score;
 };
 
@@ -556,6 +558,7 @@ i32 alphabeta(Position &pos,
               i32 &stop,
               Stack *const stack,
               int64_t (&hh_table)[2][64][64],
+              int64_t (&continuation_table)[6][64][6][64],
               vector<u64> &hash_history,
               const i32 do_null = true) {
     // Don't overflow the stack
@@ -630,6 +633,7 @@ i32 alphabeta(Position &pos,
                            stop,
                            stack,
                            hh_table,
+                           continuation_table,
                            hash_history,
                            false) >= beta)
                 return beta;
@@ -654,10 +658,15 @@ i32 alphabeta(Position &pos,
         // then we'll use that first and delay sorting one iteration.
         if (i == !(no_move == tt_move))
             for (i32 j = 0; j < num_moves; ++j) {
+                int64_t history = hh_table[pos.flipped][moves[j].from][moves[j].to];
+                if (ply)
+                    history += 2 * continuation_table[stack[ply - 1].piece][stack[ply - 1].to]
+                                                     [piece_on(pos, moves[j].from)][moves[j].to];
+                if (ply > 1)
+                    history += 2 * continuation_table[stack[ply - 2].piece][stack[ply - 2].to]
+                                                     [piece_on(pos, moves[j].from)][moves[j].to];
                 const i32 gain = max_material[moves[j].promo] + max_material[piece_on(pos, moves[j].to)];
-                move_scores[j] = gain                            ? gain + (1LL << 54)
-                                 : moves[j] == stack[ply].killer ? 1LL << 50
-                                                                 : hh_table[pos.flipped][moves[j].from][moves[j].to];
+                move_scores[j] = gain ? gain + (1LL << 54) : moves[j] == stack[ply].killer ? 1LL << 50 : history;
             }
 
         // Find best move remaining
@@ -695,6 +704,9 @@ i32 alphabeta(Position &pos,
         nodes++;
         // minify disable filter delete
 
+        stack[ply].piece = piece_on(pos, move.from);
+        stack[ply].to = move.to;
+
         i32 score;
         if (!num_moves_evaluated)
         full_window:
@@ -710,13 +722,19 @@ i32 alphabeta(Position &pos,
                                stop,
                                stack,
                                hh_table,
+                               continuation_table,
                                hash_history);
         else {
             // Late move reduction
+            int64_t history = hh_table[pos.flipped][move.from][move.to];
+            if (ply)
+                history += 2 * continuation_table[stack[ply - 1].piece][stack[ply - 1].to][stack[ply].piece][move.to];
+            if (ply > 1)
+                history += 2 * continuation_table[stack[ply - 2].piece][stack[ply - 2].to][stack[ply].piece][move.to];
+
             i32 reduction = depth > 2 && num_moves_evaluated > 4 && !gain
                                 ? num_moves_evaluated / 14 + depth / 17 + (alpha == beta - 1) + !improving +
-                                      (hh_table[pos.flipped][move.from][move.to] < 0) -
-                                      (hh_table[pos.flipped][move.from][move.to] > 0)
+                                      (history < 0) - (history > 0)
                                 : 0;
 
         zero_window:
@@ -732,6 +750,7 @@ i32 alphabeta(Position &pos,
                                stop,
                                stack,
                                hh_table,
+                               continuation_table,
                                hash_history);
 
             if (reduction > 0 && score > alpha) {
@@ -764,8 +783,21 @@ i32 alphabeta(Position &pos,
                     tt_flag = Lower;
                     if (!gain) {
                         hh_table[pos.flipped][move.from][move.to] += depth * depth;
-                        for (i32 j = 0; j < num_quiets_evaluated - 1; ++j)
+                        if (ply)
+                            continuation_table[stack[ply - 1].piece][stack[ply - 1].to][stack[ply].piece][move.to] +=
+                                depth * depth;
+                        if (ply > 1)
+                            continuation_table[stack[ply - 2].piece][stack[ply - 2].to][stack[ply].piece][move.to] +=
+                                depth * depth;
+                        for (i32 j = 0; j < num_quiets_evaluated - 1; ++j) {
                             hh_table[pos.flipped][quiets_evaluated[j].from][quiets_evaluated[j].to] -= depth * depth;
+                            if (ply)
+                                continuation_table[stack[ply - 1].piece][stack[ply - 1].to][piece_on(
+                                    pos, quiets_evaluated[j].from)][quiets_evaluated[j].to] -= depth * depth;
+                            if (ply > 1)
+                                continuation_table[stack[ply - 2].piece][stack[ply - 2].to][piece_on(
+                                    pos, quiets_evaluated[j].from)][quiets_evaluated[j].to] -= depth * depth;
+                        }
                         stack[ply].killer = move;
                     }
                     break;
@@ -844,6 +876,7 @@ auto iteratively_deepen(Position &pos,
                         i32 &stop) {
     Stack stack[128] = {};
     int64_t hh_table[2][64][64] = {};
+    int64_t continuation_table[6][64][6][64] = {};
     // minify enable filter delete
     u64 nodes = 0;
     // minify disable filter delete
@@ -865,6 +898,7 @@ auto iteratively_deepen(Position &pos,
                                        stop,
                                        stack,
                                        hh_table,
+                                       continuation_table,
                                        hash_history);
 
         // Hard time limit exceeded
