@@ -22,6 +22,7 @@
 #include <cstring>
 #include <ctime>
 #include <iostream>
+#include <fstream>
 #include <random>
 #include <string>
 #include <thread>
@@ -687,6 +688,9 @@ i32 alphabeta(Position &pos,
             static_eval + 100 * depth + gain < alpha)
             break;
 
+        if (ply > 0 && !in_check && !gain && hh_table[pos.flipped][move.from][move.to] < depth * -512)
+            continue;
+
         Position npos = pos;
         if (!makemove(npos, move))
             continue;
@@ -763,9 +767,10 @@ i32 alphabeta(Position &pos,
                 if (score >= beta) {
                     tt_flag = Lower;
                     if (!gain) {
-                        hh_table[pos.flipped][move.from][move.to] += depth * depth;
+                        const int bonus = depth * depth;
+                        hh_table[pos.flipped][move.from][move.to] += bonus - bonus * abs(hh_table[pos.flipped][move.from][move.to]) / 4096;
                         for (i32 j = 0; j < num_quiets_evaluated - 1; ++j)
-                            hh_table[pos.flipped][quiets_evaluated[j].from][quiets_evaluated[j].to] -= depth * depth;
+                            hh_table[pos.flipped][quiets_evaluated[j].from][quiets_evaluated[j].to] -= bonus - bonus * abs(hh_table[pos.flipped][quiets_evaluated[j].from][quiets_evaluated[j].to]) / 4096;
                         stack[ply].killer = move;
                     }
                     break;
