@@ -17,6 +17,7 @@
 // minify replace NULL 0
 
 #include <array>
+#include <bit>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
@@ -50,10 +51,9 @@ enum
     None
 };
 
-[[nodiscard]] u64 now() {
-    timespec t;
-    clock_gettime(CLOCK_MONOTONIC, &t);
-    return t.tv_sec * 1000 + t.tv_nsec / 1000000;
+[[nodiscard]] uint64_t now() {
+    using namespace std::chrono;
+    return duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
 }
 
 struct [[nodiscard]] Position {
@@ -111,15 +111,15 @@ i32 thread_count = 1;
 vector<TT_Entry> transposition_table;
 
 [[nodiscard]] u64 flip(const u64 bb) {
-    return __builtin_bswap64(bb);
+    return std::byteswap(bb);
 }
 
 [[nodiscard]] i32 lsb(const u64 bb) {
-    return __builtin_ctzll(bb);
+    return std::countr_zero(bb);
 }
 
 [[nodiscard]] i32 count(const u64 bb) {
-    return __builtin_popcountll(bb);
+    return std::popcount(bb);
 }
 
 [[nodiscard]] u64 east(const u64 bb) {

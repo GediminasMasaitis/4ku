@@ -1,6 +1,8 @@
 build/
 .vscode/
 .vs/
+.idea/
 *.exe
 *.lzma
 src/main-mini.cpp
+cmake-build-*
