@@ -456,7 +456,7 @@ const i32 pawn_attacked_penalty[] = {S(64, 14), S(155, 142)};
 
                         // Protected passed pawns
                         if (piece_bb & protected_by_pawns)
-                            score += pawn_passed_protected;
+                            score += pawn_passed_protected * (rank - 2);
 
                         // Blocked passed pawns
                         if (north(piece_bb) & pos.colour[1])
