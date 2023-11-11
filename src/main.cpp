@@ -685,21 +685,22 @@ i32 alphabeta(Position &pos,
         moves[best_move_index] = moves[i];
         move_scores[best_move_index] = move_scores[i];
 
+        Position npos = pos;
+        if (!makemove(npos, move))
+            continue;
+
         // Material gain
         const i32 gain = max_material[move.promo] + max_material[piece_on(pos, move.to)];
 
         // Delta pruning
-        if (in_qsearch && !in_check && static_eval + 50 + gain < alpha)
+        const i32 gives_check = is_attacked(npos, lsb(npos.colour[0] & npos.pieces[King]));
+        if (in_qsearch && !in_check && !gives_check && static_eval + 50 + gain < alpha)
             break;
 
         // Forward futility pruning
-        if (ply > 0 && depth < 8 && !in_qsearch && !in_check && num_moves_evaluated &&
+        if (ply > 0 && depth < 8 && !in_qsearch && !in_check && !gives_check && num_moves_evaluated &&
             static_eval + 100 * depth + gain < alpha)
             break;
-
-        Position npos = pos;
-        if (!makemove(npos, move))
-            continue;
 
         // minify enable filter delete
         nodes++;
