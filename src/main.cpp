@@ -96,11 +96,12 @@ enum
 };
 
 struct [[nodiscard]] TTEntry {
-    u64 key;
+    uint32_t key;
     Move move;
     u8 flag;
     int16_t score;
     int16_t depth;
+    int16_t eval;
 };
 
 u64 keys[848];
@@ -590,7 +591,7 @@ i32 alphabeta(Position &pos,
     // TT Probing
     TTEntry &tt_entry = transposition_table[tt_key % num_tt_entries];
     Move tt_move{};
-    if (tt_entry.key == tt_key) {
+    if (tt_entry.key == tt_key >> 32) {
         tt_move = tt_entry.move;
         if (alpha == beta - 1 && tt_entry.depth >= depth && tt_entry.flag != tt_entry.score < beta)
             // If tt_entry.score < beta, tt_entry.flag cannot be Lower (ie must be Upper or Exact).
@@ -601,7 +602,7 @@ i32 alphabeta(Position &pos,
     else
         depth -= depth > 3;
 
-    i32 static_eval = stack[ply].score = eval(pos);
+    i32 static_eval = stack[ply].score = tt_entry.key == tt_key >> 32 ? tt_entry.eval : eval(pos);
     const i32 improving = ply > 1 && static_eval > stack[ply - 2].score;
 
     // If static_eval > tt_entry.score, tt_entry.flag cannot be Lower (ie must be Upper or Exact).
@@ -795,7 +796,12 @@ i32 alphabeta(Position &pos,
         return in_check ? ply - mate_score : 0;
 
     // Save to TT
-    tt_entry = {tt_key, best_move, tt_flag, int16_t(best_score), int16_t(!in_qsearch * depth)};
+    tt_entry = {uint32_t(tt_key >> 32),
+                best_move,
+                tt_flag,
+                int16_t(best_score),
+                int16_t(!in_qsearch * depth),
+                int16_t(stack[ply].score)};
 
     return best_score;
 }
@@ -830,7 +836,7 @@ void print_pv(const Position &pos, const Move move, vector<u64> &hash_history) {
     const TTEntry &tt_entry = transposition_table[tt_key % num_tt_entries];
 
     // Only continue if the move was valid and comes from a PV search
-    if (tt_entry.key != tt_key || tt_entry.move == no_move || tt_entry.flag != 2)
+    if (tt_entry.key != tt_key >> 32 || tt_entry.move == no_move || tt_entry.flag != 2)
         return;
 
     // Avoid infinite recursion on a repetition
