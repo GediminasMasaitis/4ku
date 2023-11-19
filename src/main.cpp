@@ -1131,36 +1131,14 @@ i32 main(
         }
         // minify disable filter delete
         else if (word == "go") {
-            i32 time_left;
-
-            // minify enable filter delete
-            while (true) {
-                cin >> word;
-                if (word == (pos.flipped ? "btime" : "wtime")) {
-                    cin >> time_left;
-                    break;
-                }
-            }
-
-            goto search_start;
-            // minify disable filter delete
-
-            cin >> word >> time_left;
-            if (pos.flipped)
-                cin >> word >> time_left;
-
-        // minify enable filter delete
-        search_start:
-            // minify disable filter delete
-
             const u64 start = now();
-
             // Lazy SMP
             vector<thread> threads;
             i32 stop = false;
-            for (i32 i = 1; i < thread_count; ++i)
-                threads.emplace_back([=, &stop]() mutable {
-                    iteratively_deepen(pos,
+            Move best_move;
+            for (i32 i = 0; i < thread_count; ++i)
+                threads.emplace_back([=, &stop, &best_move]() mutable {
+                    auto bm = iteratively_deepen(pos,
                                        hash_history,
                                        // minify enable filter delete
                                        i,
@@ -1170,20 +1148,18 @@ i32 main(
                                        start,
                                        1 << 30,
                                        stop);
+                    if(i == 0) {
+                        best_move = bm;
+                    }
                 });
-            const Move best_move = iteratively_deepen(pos,
-                                                      hash_history,
-                                                      // minify enable filter delete
-                                                      0,
-                                                      0,
-                                                      total_nodes,
-                                                      // minify disable filter delete
-                                                      start,
-                                                      time_left / 3,
-                                                      stop);
+            while (true) {
+                cin >> word;
+                if (word == "stop")
+                    break;
+            }
             stop = true;
-            for (i32 i = 1; i < thread_count; ++i)
-                threads[i - 1].join();
+            for (i32 i = 0; i < thread_count; ++i)
+                threads[i].join();
             cout << "bestmove " << move_str(best_move, pos.flipped) << "\n";
         } else if (word == "position") {
             // Set to startpos
