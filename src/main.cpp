@@ -575,7 +575,7 @@ i32 alphabeta(Position &pos,
 
     // Check extensions
     const i32 in_check = is_attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
-    depth += in_check;
+    depth = max(in_check, depth + in_check);
 
     i32 in_qsearch = depth <= 0;
     const u64 tt_key = get_hash(pos);
