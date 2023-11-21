@@ -355,6 +355,14 @@ void generate_piece_moves(Move *const movelist,
     return (eg << 16) + mg;
 }
 
+namespace O {
+    i32 Tune1 = 0;
+    i32 Tune2 = 0;
+    i32 Tune3 = 0;
+    i32 Tune4 = 0;
+    i32 Tune5 = 0;
+}
+
 const i32 phases[] = {0, 1, 1, 2, 4, 0};
 const i32 max_material[] = {139, 450, 453, 849, 1685, 0, 0};
 const i32 material[] = {S(95, 139), S(339, 450), S(348, 453), S(461, 849), S(832, 1685), 0};
@@ -1009,6 +1017,9 @@ void set_fen(Position &pos, const string &fen) {
 }
 // minify disable filter delete
 
+#define PRINT_TUNE_OPTION(param) cout << "option name " << #param << " type spin default " << O::param << " min -32768 max 32767\n";
+#define READ_TUNE_OPTION(param) else if (word == #param) { cin >> word; cin >> O::param; }
+
 i32 main(
     // minify enable filter delete
     const i32 argc,
@@ -1093,6 +1104,11 @@ i32 main(
     cout << "option name Threads type spin default " << thread_count << " min 1 max 256\n";
     cout << "option name Hash type spin default " << num_tt_entries * sizeof(TTEntry) / (1024 * 1024)
          << " min 1 max 65536\n";
+    PRINT_TUNE_OPTION(Tune1)
+    PRINT_TUNE_OPTION(Tune2)
+    PRINT_TUNE_OPTION(Tune3)
+    PRINT_TUNE_OPTION(Tune4)
+    PRINT_TUNE_OPTION(Tune5)
     // minify disable filter delete
     cout << "uciok\n";
 
@@ -1128,6 +1144,11 @@ i32 main(
                 transposition_table.resize(num_tt_entries);
                 transposition_table.shrink_to_fit();
             }
+            READ_TUNE_OPTION(Tune1)
+            READ_TUNE_OPTION(Tune2)
+            READ_TUNE_OPTION(Tune3)
+            READ_TUNE_OPTION(Tune4)
+            READ_TUNE_OPTION(Tune5)
         }
         // minify disable filter delete
         else if (word == "go") {
