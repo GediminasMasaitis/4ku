@@ -86,7 +86,6 @@ struct [[nodiscard]] Stack {
     Move quiets_evaluated[256];
     i32 move_scores[256];
     Move move;
-    Move killer;
     i32 score;
 };
 
@@ -745,9 +744,7 @@ i32 alphabeta(Position &pos,
         if (i == !(no_move == tt_move))
             for (i32 j = 0; j < num_moves; ++j) {
                 const i32 gain = max_material[moves[j].promo] + max_material[piece_on(pos, moves[j].to)];
-                move_scores[j] = gain                            ? gain + 1025
-                                 : moves[j] == stack[ply].killer ? 1024
-                                                                 : hh_table[pos.flipped][moves[j].from][moves[j].to];
+                move_scores[j] = gain ? gain + 1024 : hh_table[pos.flipped][moves[j].from][moves[j].to];
             }
 
         // Find best move remaining
@@ -860,7 +857,6 @@ i32 alphabeta(Position &pos,
                             depth * depth +
                             depth * depth * hh_table[pos.flipped][quiets_evaluated[j].from][quiets_evaluated[j].to] /
                                 512;
-                    stack[ply].killer = move;
                 }
                 break;
             }
