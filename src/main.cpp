@@ -85,6 +85,8 @@ struct [[nodiscard]] Stack {
     Move moves_evaluated[256];
     i32 move_scores[256];
     Move move;
+    u8 piece;
+    u8 to;
     Move killer;
     i32 score;
 };
@@ -637,6 +639,7 @@ i32 alphabeta(Position &pos,
               i32 &stop,
               vector<u64> &hash_history,
               i32 (&hh_table)[2][2][64][64],
+              i32 (&continuations)[6][64][6][64],
               const i32 do_null = true) {
     assert(alpha < beta);
     assert(ply >= 0);
@@ -719,6 +722,7 @@ i32 alphabeta(Position &pos,
                            stop,
                            hash_history,
                            hh_table,
+                           continuations,
                            false) >= beta)
                 return beta;
         }
@@ -782,6 +786,9 @@ i32 alphabeta(Position &pos,
         nodes++;
         // minify disable filter delete
 
+        stack[ply].piece = piece_on(pos, move.from);
+        stack[ply].to = move.to;
+
         i32 score;
         if (!num_moves_evaluated)
         full_window:
@@ -797,7 +804,8 @@ i32 alphabeta(Position &pos,
                                stack,
                                stop,
                                hash_history,
-                               hh_table);
+                               hh_table,
+                               continuations);
         else {
             // Late move reduction
             i32 reduction = depth > 2 && num_moves_evaluated > 4
@@ -820,7 +828,8 @@ i32 alphabeta(Position &pos,
                                stack,
                                stop,
                                hash_history,
-                               hh_table);
+                               hh_table,
+                               continuations);
 
             if (reduction > 0 && score > alpha) {
                 reduction = 0;
@@ -933,6 +942,7 @@ auto iteratively_deepen(Position &pos,
                         i32 &stop,
                         vector<u64> &hash_history,
                         i32 (&hh_table)[2][2][64][64],
+                        i32 (&continuations)[6][64][6][64],
                         // minify enable filter delete
                         i32 thread_id,
                         const i32 bench_depth,
@@ -963,7 +973,8 @@ auto iteratively_deepen(Position &pos,
                               stack,
                               stop,
                               hash_history,
-                              hh_table);
+                              hh_table,
+                              continuations);
 
             // Hard time limit exceeded
             if (stop || now() >= start_time + allocated_time)
@@ -1114,6 +1125,7 @@ i32 main(
     Position pos;
     vector<u64> hash_history;
     i32 hh_table[2][2][64][64] = {};
+    i32 continuations[6][64][6][64] = {};
 
     // minify enable filter delete
     // OpenBench compliance
@@ -1154,7 +1166,7 @@ i32 main(
         for (const auto &[fen, depth] : bench_positions) {
             i32 stop = false;
             set_fen(pos, fen);
-            iteratively_deepen(pos, stop, hash_history, hh_table, 0, depth, total_nodes, 1 << 30, now());
+            iteratively_deepen(pos, stop, hash_history, hh_table, continuations, 0, depth, total_nodes, 1 << 30, now());
         }
         const u64 elapsed = now() - start_time;
 
@@ -1195,6 +1207,7 @@ i32 main(
             break;
         else if (word == "ucinewgame") {
             memset(hh_table, 0, sizeof(hh_table));
+            memset(continuations, 0, sizeof(continuations));
             memset(transposition_table.data(), 0, sizeof(TTEntry) * transposition_table.size());
         } else if (word == "isready")
             cout << "readyok\n";
@@ -1251,6 +1264,7 @@ i32 main(
                                        stop,
                                        hash_history,
                                        hh_table,
+                                       continuations,
                                        // minify enable filter delete
                                        i,
                                        0,
@@ -1263,6 +1277,7 @@ i32 main(
                                                       stop,
                                                       hash_history,
                                                       hh_table,
+                                                      continuations,
                                                       // minify enable filter delete
                                                       0,
                                                       0,
