@@ -865,6 +865,11 @@ i32 alphabeta(Position &pos,
                 break;
             }
         }
+
+        // Late move pruning based on total move count
+        if (!in_check && alpha == beta - 1 && num_moves_evaluated > 5 + 2 * depth * depth >> !improving)
+            break;
+
         // Late move pruning based on quiet move count
         if (!in_check && alpha == beta - 1 && num_quiets_evaluated > 2 + depth * depth >> !improving)
             break;
