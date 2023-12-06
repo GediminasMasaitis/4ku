@@ -85,7 +85,10 @@ struct [[nodiscard]] Stack {
     Move moves[256];
     Move moves_evaluated[256];
     i32 move_scores[256];
-    Move move;
+    Move current_move;
+    // u8 from;
+    // u8 to;
+    Move best_move;
     Move killer;
     i32 score;
 };
@@ -636,6 +639,7 @@ i32 alphabeta(Position &pos,
               i32 &stop,
               vector<u64> &hash_history,
               i32 (&hh_table)[2][2][64][64],
+              Move (&countermoves)[64][64],
               const i32 do_null = true) {
     assert(alpha < beta);
     assert(ply >= 0);
@@ -718,6 +722,7 @@ i32 alphabeta(Position &pos,
                            stop,
                            hash_history,
                            hh_table,
+                           countermoves,
                            false) >= beta)
                 return beta;
         }
@@ -735,6 +740,7 @@ i32 alphabeta(Position &pos,
     auto &move_scores = stack[ply].move_scores;
     auto &moves_evaluated = stack[ply].moves_evaluated;
     const i32 num_moves = movegen(pos, moves, in_qsearch);
+    const Move previous_move = ply ? stack[ply - 1].current_move : no_move;
 
     for (i32 i = 0; i < num_moves; ++i) {
         // Score moves at the first loop, except if we have a hash move,
@@ -743,7 +749,10 @@ i32 alphabeta(Position &pos,
             for (i32 j = 0; j < num_moves; ++j) {
                 const i32 gain = max_material[moves[j].promo] + max_material[piece_on(pos, moves[j].to)];
                 move_scores[j] = hh_table[pos.flipped][!gain][moves[j].from][moves[j].to] +
-                                 (gain || moves[j] == stack[ply].killer) * 2048 + gain;
+                                 (gain || moves[j] == stack[ply].killer                            ? 2048
+                                  : moves[j] == countermoves[previous_move.from][previous_move.to] ? 1024
+                                                                                                   : 0) +
+                                 gain;
             }
 
         // Find best move remaining
@@ -796,7 +805,8 @@ i32 alphabeta(Position &pos,
                                stack,
                                stop,
                                hash_history,
-                               hh_table);
+                               hh_table,
+                               countermoves);
         else {
             // Late move reduction
             i32 reduction = depth > 2 && num_moves_evaluated > 4
@@ -819,7 +829,8 @@ i32 alphabeta(Position &pos,
                                stack,
                                stop,
                                hash_history,
-                               hh_table);
+                               hh_table,
+                               countermoves);
 
             if (reduction > 0 && score > alpha) {
                 reduction = 0;
@@ -843,12 +854,15 @@ i32 alphabeta(Position &pos,
             best_move = move;
             tt_flag = Exact;
             alpha = score;
-            stack[ply].move = move;
+            stack[ply].best_move = move;
             if (score >= beta) {
                 tt_flag = Lower;
 
-                if (!gain)
+                if (!gain) {
                     stack[ply].killer = move;
+                    if (ply)
+                        countermoves[stack[ply - 1].current_move.from][stack[ply - 1].current_move.to] = move;
+                }
 
                 hh_table[pos.flipped][!gain][move.from][move.to] +=
                     depth * depth - depth * depth * hh_table[pos.flipped][!gain][move.from][move.to] / 512;
@@ -940,6 +954,7 @@ auto iteratively_deepen(Position &pos,
                         const i32 allocated_time,
                         const u64 start_time) {
     Stack stack[128] = {};
+    Move countermoves[64][64] = {};
     // minify enable filter delete
     u64 nodes = 0;
     // minify disable filter delete
@@ -962,11 +977,12 @@ auto iteratively_deepen(Position &pos,
                               stack,
                               stop,
                               hash_history,
-                              hh_table);
+                              hh_table,
+                              countermoves);
 
             // Hard time limit exceeded
             if (stop || now() >= start_time + allocated_time)
-                return stack[0].move;
+                return stack[0].best_move;
 
             // minify enable filter delete
             // The main search thread prints with every iteration normally, or when the target depth has finished when
@@ -987,14 +1003,14 @@ auto iteratively_deepen(Position &pos,
                 // Not a lowerbound - a fail low won't have a meaningful PV.
                 if (score > alpha) {
                     cout << " pv";
-                    print_pv(pos, stack[0].move, hash_history);
+                    print_pv(pos, stack[0].best_move, hash_history);
                 }
                 cout << "\n";
             }
             // OpenBench compliance
             if (bench_depth > 0 && i >= bench_depth && alpha < score && score < beta) {
                 total_nodes += nodes;
-                return stack[0].move;
+                return stack[0].best_move;
             }
             // minify disable filter delete
 
@@ -1006,7 +1022,7 @@ auto iteratively_deepen(Position &pos,
         if (2 > research && now() >= start_time + allocated_time / 10)
             break;
     }
-    return stack[0].move;
+    return stack[0].best_move;
 }
 
 // minify enable filter delete
