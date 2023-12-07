@@ -775,6 +775,11 @@ i32 alphabeta(Position &pos,
             static_eval + 104 * depth + gain < alpha)
             break;
 
+        // Shallow history pruning
+        if (ply > 0 && depth == 1 && !in_qsearch && !in_check && num_moves_evaluated && !gain &&
+            hh_table[pos.flipped][!gain][move.from][move.to] < -400)
+            break;
+
         Position npos = pos;
         if (!makemove(npos, move))
             continue;
