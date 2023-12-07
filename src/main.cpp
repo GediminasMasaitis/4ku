@@ -674,7 +674,7 @@ i32 alphabeta(Position &pos,
     }
     // Internal iterative reduction
     else
-        depth -= depth > 3;
+        depth -= depth > 8 ? 2 : depth > 3 ? 1 : 0;
 
     i32 static_eval = stack[ply].score = eval(pos);
     const i32 improving = ply > 1 && static_eval > stack[ply - 2].score;
