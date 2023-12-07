@@ -692,13 +692,9 @@ i32 alphabeta(Position &pos,
 
     if (ply > 0 && !in_qsearch && !in_check && alpha == beta - 1) {
         // Reverse futility pruning
-        if (depth < 8) {
-            assert(ply > 0);
+        if (depth < 8)
             if (static_eval - 68 * (depth - improving) >= beta)
                 return static_eval;
-
-            in_qsearch = static_eval + 256 * depth < alpha;
-        }
 
         // Null move pruning
         if (depth > 2 && static_eval >= beta && static_eval >= stack[ply].score && do_null &&
