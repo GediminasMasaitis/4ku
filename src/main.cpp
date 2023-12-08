@@ -649,7 +649,7 @@ i32 alphabeta(Position &pos,
         return eval(pos);
 
     // Check extensions
-    const i32 in_check = is_attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
+    const i32 in_check = ply && is_attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     depth += in_check;
 
     i32 in_qsearch = depth <= 0;
