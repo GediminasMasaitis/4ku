@@ -638,6 +638,7 @@ i32 alphabeta(Position &pos,
               i32 &stop,
               vector<u64> &hash_history,
               i32 (&hh_table)[2][2][64][64],
+              const i32 in_check,
               const i32 do_null = true) {
     assert(alpha < beta);
     assert(ply >= 0);
@@ -649,7 +650,6 @@ i32 alphabeta(Position &pos,
         return eval(pos);
 
     // Check extensions
-    const i32 in_check = is_attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     depth += in_check;
 
     i32 in_qsearch = depth <= 0;
@@ -783,6 +783,8 @@ i32 alphabeta(Position &pos,
         nodes++;
         // minify disable filter delete
 
+        const i32 gives_check = is_attacked(npos, lsb(npos.colour[0] & npos.pieces[King]));
+
         i32 score;
         if (!num_moves_evaluated)
         full_window:
@@ -798,7 +800,8 @@ i32 alphabeta(Position &pos,
                                stack,
                                stop,
                                hash_history,
-                               hh_table);
+                               hh_table,
+                               gives_check);
         else {
             // Late move reduction
             i32 reduction = depth > 2 && num_moves_evaluated > 4
@@ -821,7 +824,8 @@ i32 alphabeta(Position &pos,
                                stack,
                                stop,
                                hash_history,
-                               hh_table);
+                               hh_table,
+                               gives_check);
 
             if (reduction > 0 && score > alpha) {
                 reduction = 0;
@@ -964,7 +968,8 @@ auto iteratively_deepen(Position &pos,
                               stack,
                               stop,
                               hash_history,
-                              hh_table);
+                              hh_table,
+                              false);
 
             // Hard time limit exceeded
             if (stop || now() >= start_time + allocated_time)
