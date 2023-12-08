@@ -720,6 +720,7 @@ i32 alphabeta(Position &pos,
                            stop,
                            hash_history,
                            hh_table,
+                           false,
                            false) >= beta)
                 return beta;
         }
