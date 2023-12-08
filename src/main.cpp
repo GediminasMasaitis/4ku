@@ -771,11 +771,6 @@ i32 alphabeta(Position &pos,
         if (in_qsearch && !in_check && static_eval + 48 + gain < alpha)
             break;
 
-        // Forward futility pruning
-        if (ply > 0 && depth < 8 && !in_qsearch && !in_check && num_moves_evaluated &&
-            static_eval + 104 * depth + gain < alpha)
-            break;
-
         Position npos = pos;
         if (!makemove(npos, move))
             continue;
@@ -785,6 +780,11 @@ i32 alphabeta(Position &pos,
         // minify disable filter delete
 
         const i32 gives_check = is_attacked(npos, lsb(npos.colour[0] & npos.pieces[King]));
+
+        // Forward futility pruning
+        if (ply > 0 && depth < 8 && !in_qsearch && !in_check && !gives_check && num_moves_evaluated &&
+            static_eval + 104 * depth + gain < alpha)
+            break;
 
         i32 score;
         if (!num_moves_evaluated)
