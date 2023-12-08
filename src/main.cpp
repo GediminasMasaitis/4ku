@@ -767,10 +767,6 @@ i32 alphabeta(Position &pos,
         // Material gain
         const i32 gain = max_material[move.promo] + max_material[piece_on(pos, move.to)];
 
-        // Delta pruning
-        if (in_qsearch && !in_check && static_eval + 48 + gain < alpha)
-            break;
-
         Position npos = pos;
         if (!makemove(npos, move))
             continue;
@@ -781,8 +777,12 @@ i32 alphabeta(Position &pos,
 
         const i32 gives_check = is_attacked(npos, lsb(npos.colour[0] & npos.pieces[King]));
 
+        // Delta pruning
+        if (in_qsearch && !in_check && !gives_check && static_eval + 48 + gain < alpha)
+            break;
+
         // Forward futility pruning
-        if (ply > 0 && depth < 8 && !in_qsearch && !in_check && !gives_check && num_moves_evaluated &&
+        if (ply > 0 && depth < 8 && !in_qsearch && !in_check && num_moves_evaluated && !gives_check &&
             static_eval + 104 * depth + gain < alpha)
             break;
 
