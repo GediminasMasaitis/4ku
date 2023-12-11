@@ -624,6 +624,8 @@ const i32 pawn_attacked_penalty[] = {S(63, 14), S(156, 140)};
     return hash;
 }
 
+const i32 move_order_weights[] = {100, 300, 300, 500, 900, 0, 0};
+
 i32 alphabeta(Position &pos,
               i32 alpha,
               const i32 beta,
@@ -742,7 +744,7 @@ i32 alphabeta(Position &pos,
         // then we'll use that first and delay sorting one iteration.
         if (i == !(no_move == tt_move))
             for (i32 j = 0; j < num_moves; ++j) {
-                const i32 gain = max_material[moves[j].promo] + max_material[piece_on(pos, moves[j].to)];
+                const i32 gain = max_material[moves[j].promo] + move_order_weights[piece_on(pos, moves[j].to)];
                 move_scores[j] = hh_table[pos.flipped][!gain][moves[j].from][moves[j].to] +
                                  (gain || moves[j] == stack[ply].killer) * 2048 + gain;
             }
