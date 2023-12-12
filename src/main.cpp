@@ -851,7 +851,7 @@ i32 alphabeta(Position &pos,
                 if (!gain)
                     stack[ply].killer = move;
 
-                if (depth > 0) {
+                if (!in_qsearch) {
                     hh_table[pos.flipped][!gain][move.from][move.to] +=
                         depth * depth - depth * depth * hh_table[pos.flipped][!gain][move.from][move.to] / 512;
                     for (i32 j = 0; j < num_moves_evaluated; ++j) {
