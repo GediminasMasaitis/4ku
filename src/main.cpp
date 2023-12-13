@@ -1242,6 +1242,11 @@ i32 main(
 
             const u64 start = now();
 
+            // Age history table
+            for (i32 i = 0; i < 4; ++i)
+                for (i32 j = 0; j < 4096; ++j)
+                    hh_table[i / 2][i % 2][j / 64][j % 64] /= 8;
+
             // Lazy SMP
             vector<thread> threads;
             i32 stop = false;
