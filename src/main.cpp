@@ -696,7 +696,11 @@ i32 alphabeta(Position &pos,
             if (static_eval - 68 * (depth - improving) >= beta)
                 return static_eval;
 
-            in_qsearch = static_eval + 256 * depth < alpha;
+            // Razoring
+            if (static_eval + 256 * depth < alpha) {
+                in_qsearch = true;
+                depth = 0;
+            }
         }
 
         // Null move pruning
