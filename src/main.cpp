@@ -747,8 +747,13 @@ i32 alphabeta(Position &pos,
         if (i == !(no_move == tt_move))
             for (i32 j = 0; j < num_moves; ++j) {
                 const i32 gain = max_material[moves[j].promo] + max_material[piece_on(pos, moves[j].to)];
-                const i32 cont1 = ply && !gain ? continuations[stack[ply - 1].piece][stack[ply - 1].to][piece_on(pos, moves[j].from)][moves[j].to] : 0;
-                move_scores[j] = hh_table[pos.flipped][!gain][moves[j].from][moves[j].to] + cont1 +
+                const i32 cont1 = ply && !gain ? continuations[stack[ply - 1].piece][stack[ply - 1].to]
+                                                              [piece_on(pos, moves[j].from)][moves[j].to]
+                                               : 0;
+                const i32 cont2 = ply > 1 && !gain ? continuations[stack[ply - 2].piece][stack[ply - 2].to]
+                                                                  [piece_on(pos, moves[j].from)][moves[j].to]
+                                                   : 0;
+                move_scores[j] = hh_table[pos.flipped][!gain][moves[j].from][moves[j].to] + cont1 + cont2 +
                                  (gain || moves[j] == stack[ply].killer) * 2048 + gain;
             }
 
@@ -860,8 +865,18 @@ i32 alphabeta(Position &pos,
 
                 if (!gain) {
                     stack[ply].killer = move;
-                    if(ply)
-                        continuations[stack[ply-1].piece][stack[ply-1].to][piece_on(pos, move.from)][move.to] += depth * depth - depth * depth * continuations[stack[ply - 1].piece][stack[ply - 1].to][piece_on(pos, move.from)][move.to] / 512;
+                    if (ply)
+                        continuations[stack[ply - 1].piece][stack[ply - 1].to][piece_on(pos, move.from)][move.to] +=
+                            depth * depth - depth * depth *
+                                                continuations[stack[ply - 1].piece][stack[ply - 1].to]
+                                                             [piece_on(pos, move.from)][move.to] /
+                                                512;
+                    if (ply > 1)
+                        continuations[stack[ply - 2].piece][stack[ply - 2].to][piece_on(pos, move.from)][move.to] +=
+                            depth * depth - depth * depth *
+                                                continuations[stack[ply - 2].piece][stack[ply - 2].to]
+                                                             [piece_on(pos, move.from)][move.to] /
+                                                512;
                 }
 
                 hh_table[pos.flipped][!gain][move.from][move.to] +=
@@ -873,9 +888,21 @@ i32 alphabeta(Position &pos,
                         depth * depth +
                         depth * depth *
                             hh_table[pos.flipped][!prev_gain][moves_evaluated[j].from][moves_evaluated[j].to] / 512;
-                    if(!prev_gain) {
-                        if(ply)
-                            continuations[stack[ply - 1].piece][stack[ply - 1].to][piece_on(pos, moves_evaluated[j].from)][moves_evaluated[j].to] -= depth * depth + depth * depth * continuations[stack[ply - 1].piece][stack[ply - 1].to][piece_on(pos, moves_evaluated[j].from)][moves_evaluated[j].to] / 512;
+                    if (!prev_gain) {
+                        if (ply)
+                            continuations[stack[ply - 1].piece][stack[ply - 1].to]
+                                         [piece_on(pos, moves_evaluated[j].from)][moves_evaluated[j].to] -=
+                                depth * depth + depth * depth *
+                                                    continuations[stack[ply - 1].piece][stack[ply - 1].to][piece_on(
+                                                        pos, moves_evaluated[j].from)][moves_evaluated[j].to] /
+                                                    512;
+                        if (ply > 1)
+                            continuations[stack[ply - 2].piece][stack[ply - 2].to]
+                                         [piece_on(pos, moves_evaluated[j].from)][moves_evaluated[j].to] -=
+                                depth * depth + depth * depth *
+                                                    continuations[stack[ply - 2].piece][stack[ply - 2].to][piece_on(
+                                                        pos, moves_evaluated[j].from)][moves_evaluated[j].to] /
+                                                    512;
                     }
                 }
                 break;
