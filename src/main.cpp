@@ -636,7 +636,7 @@ i32 alphabeta(Position &pos,
               Stack *const stack,
               i32 &stop,
               vector<u64> &hash_history,
-              i32 (&hh_table)[2][2][64][64],
+              i32 (&hh_table)[2][2][6][64][64],
               const i32 do_null = true) {
     assert(alpha < beta);
     assert(ply >= 0);
@@ -743,8 +743,9 @@ i32 alphabeta(Position &pos,
         if (i == !(no_move == tt_move))
             for (i32 j = 0; j < num_moves; ++j) {
                 const i32 gain = max_material[moves[j].promo] + max_material[piece_on(pos, moves[j].to)];
-                move_scores[j] = hh_table[pos.flipped][!gain][moves[j].from][moves[j].to] +
-                                 (gain || moves[j] == stack[ply].killer) * 2048 + gain;
+                move_scores[j] =
+                    hh_table[pos.flipped][!gain][piece_on(pos, moves[j].from)][moves[j].from][moves[j].to] +
+                    (gain || moves[j] == stack[ply].killer) * 2048 + gain;
             }
 
         // Find best move remaining
@@ -800,11 +801,14 @@ i32 alphabeta(Position &pos,
                                hh_table);
         else {
             // Late move reduction
-            i32 reduction = depth > 2 && num_moves_evaluated > 4
-                                ? max(num_moves_evaluated / 13 + depth / 15 + (alpha == beta - 1) + !improving -
-                                          min(max(hh_table[pos.flipped][!gain][move.from][move.to] / 128, -2), 2),
-                                      0)
-                                : 0;
+            i32 reduction =
+                depth > 2 && num_moves_evaluated > 4
+                    ? max(num_moves_evaluated / 13 + depth / 15 + (alpha == beta - 1) + !improving -
+                              min(max(hh_table[pos.flipped][!gain][piece_on(pos, move.from)][move.from][move.to] / 128,
+                                      -2),
+                                  2),
+                          0)
+                    : 0;
 
         zero_window:
             assert(reduction >= 0);
@@ -851,15 +855,18 @@ i32 alphabeta(Position &pos,
                 if (!gain)
                     stack[ply].killer = move;
 
-                hh_table[pos.flipped][!gain][move.from][move.to] +=
-                    depth * depth - depth * depth * hh_table[pos.flipped][!gain][move.from][move.to] / 512;
+                hh_table[pos.flipped][!gain][piece_on(pos, move.from)][move.from][move.to] +=
+                    depth * depth -
+                    depth * depth * hh_table[pos.flipped][!gain][piece_on(pos, move.from)][move.from][move.to] / 512;
                 for (i32 j = 0; j < num_moves_evaluated; ++j) {
                     const i32 prev_gain =
                         max_material[moves_evaluated[j].promo] + max_material[piece_on(pos, moves_evaluated[j].to)];
-                    hh_table[pos.flipped][!prev_gain][moves_evaluated[j].from][moves_evaluated[j].to] -=
-                        depth * depth +
-                        depth * depth *
-                            hh_table[pos.flipped][!prev_gain][moves_evaluated[j].from][moves_evaluated[j].to] / 512;
+                    hh_table[pos.flipped][!prev_gain][piece_on(pos, moves_evaluated[j].from)][moves_evaluated[j].from]
+                            [moves_evaluated[j].to] -=
+                        depth * depth + depth * depth *
+                                            hh_table[pos.flipped][!prev_gain][piece_on(pos, moves_evaluated[j].from)]
+                                                    [moves_evaluated[j].from][moves_evaluated[j].to] /
+                                            512;
                 }
                 break;
             }
@@ -932,7 +939,7 @@ void print_pv(const Position &pos, const Move move, vector<u64> &hash_history) {
 auto iteratively_deepen(Position &pos,
                         i32 &stop,
                         vector<u64> &hash_history,
-                        i32 (&hh_table)[2][2][64][64],
+                        i32 (&hh_table)[2][2][6][64][64],
                         // minify enable filter delete
                         i32 thread_id,
                         const i32 bench_depth,
@@ -1113,7 +1120,7 @@ i32 main(
 
     Position pos;
     vector<u64> hash_history;
-    i32 hh_table[2][2][64][64] = {};
+    i32 hh_table[2][2][6][64][64] = {};
 
     // minify enable filter delete
     // OpenBench compliance
