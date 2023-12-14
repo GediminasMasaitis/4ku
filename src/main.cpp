@@ -421,6 +421,30 @@ void generate_piece_moves(Move *const movelist,
     return (eg << 16) + mg;
 }
 
+namespace O {
+    i32 TempoMg = 29;
+    i32 TempoEg = 10;
+    i32 IirLimit = 3;
+    i32 RfpDepth = 8;
+    i32 RfpMargin = 68;
+    i32 RazorDepth = 8;
+    i32 RazorMargin = 256;
+    i32 NmpDepthLimit = 2;
+    i32 NmpDepthReduction = 4;
+    i32 NmpExtraDepthDivisor = 5;
+    i32 NmpBetaDistanceDivisor = 200;
+    i32 NmpBetaDistanceLimit = 3;
+    i32 DeltaMargin = 48;
+    i32 FfpDepthLimit = 8;
+    i32 FfpMargin = 104;
+    i32 LmrDepthLimit = 2;
+    i32 LmrMoveLimit = 4;
+    i32 LmrMoveDivisor = 13;
+    i32 LmrDepthDivisor = 15;
+    i32 LmpMoveCount = 2;
+    i32 AwInitial = 29;
+}
+
 const i32 phases[] = {0, 1, 1, 2, 4, 0};
 const i32 max_material[] = {137, 443, 446, 837, 1693, 0, 0};
 const i32 material[] = {S(93, 137), S(325, 443), S(334, 446), S(440, 837), S(750, 1693), 0};
@@ -470,7 +494,7 @@ const i32 pawn_attacked_penalty[] = {S(63, 14), S(156, 140)};
 
 [[nodiscard]] i32 eval(Position &pos) {
     // Include side to move bonus
-    i32 score = S(29, 10);
+    i32 score = S(O::TempoMg, O::TempoEg);
     i32 phase = 0;
 
     for (i32 c = 0; c < 2; ++c) {
@@ -673,7 +697,7 @@ i32 alphabeta(Position &pos,
     }
     // Internal iterative reduction
     else
-        depth -= depth > 3;
+        depth -= depth > O::IirLimit;
 
     i32 static_eval = stack[ply].score = eval(pos);
     const i32 improving = ply > 1 && static_eval > stack[ply - 2].score;
@@ -691,16 +715,17 @@ i32 alphabeta(Position &pos,
 
     if (ply > 0 && !in_qsearch && !in_check && alpha == beta - 1) {
         // Reverse futility pruning
-        if (depth < 8) {
+        if (depth < O::RfpDepth) {
             assert(ply > 0);
-            if (static_eval - 68 * (depth - improving) >= beta)
+            if (static_eval - O::RfpMargin * (depth - improving) >= beta)
                 return static_eval;
-
-            in_qsearch = static_eval + 256 * depth < alpha;
         }
 
+        if(depth < O::RazorDepth)
+            in_qsearch = static_eval + O::RazorMargin * depth < alpha;
+
         // Null move pruning
-        if (depth > 2 && static_eval >= beta && static_eval >= stack[ply].score && do_null &&
+        if (depth > O::NmpDepthLimit && static_eval >= beta && static_eval >= stack[ply].score && do_null &&
             pos.colour[0] & ~(pos.pieces[Pawn] | pos.pieces[King])) {
             assert(ply > 0);
             Position npos = pos;
@@ -709,7 +734,7 @@ i32 alphabeta(Position &pos,
             if (-alphabeta(npos,
                            -beta,
                            -alpha,
-                           depth - 4 - depth / 5 - min((static_eval - beta) / 200, 3),
+                           depth - O::NmpDepthReduction - depth / O::NmpExtraDepthDivisor - min((static_eval - beta) / O::NmpBetaDistanceDivisor, O::NmpBetaDistanceLimit),
                            ply + 1,
                            // minify enable filter delete
                            nodes,
@@ -766,12 +791,12 @@ i32 alphabeta(Position &pos,
         const i32 gain = max_material[move.promo] + max_material[piece_on(pos, move.to)];
 
         // Delta pruning
-        if (in_qsearch && !in_check && static_eval + 48 + gain < alpha)
+        if (in_qsearch && !in_check && static_eval + O::DeltaMargin + gain < alpha)
             break;
 
         // Forward futility pruning
-        if (ply > 0 && depth < 8 && !in_qsearch && !in_check && num_moves_evaluated &&
-            static_eval + 104 * depth + gain < alpha)
+        if (ply > 0 && depth < O::FfpDepthLimit && !in_qsearch && !in_check && num_moves_evaluated &&
+            static_eval + O::FfpMargin * depth + gain < alpha)
             break;
 
         Position npos = pos;
@@ -800,8 +825,8 @@ i32 alphabeta(Position &pos,
                                hh_table);
         else {
             // Late move reduction
-            i32 reduction = depth > 2 && num_moves_evaluated > 4
-                                ? max(num_moves_evaluated / 13 + depth / 15 + (alpha == beta - 1) + !improving -
+            i32 reduction = depth > O::LmrDepthLimit && num_moves_evaluated > O::LmrMoveLimit
+                                ? max(num_moves_evaluated / O::LmrMoveDivisor + depth / O::LmrDepthDivisor + (alpha == beta - 1) + !improving -
                                           min(max(hh_table[pos.flipped][!gain][move.from][move.to] / 128, -2), 2),
                                       0)
                                 : 0;
@@ -870,7 +895,7 @@ i32 alphabeta(Position &pos,
             num_quiets_evaluated++;
 
         // Late move pruning based on quiet move count
-        if (!in_check && alpha == beta - 1 && num_quiets_evaluated > 2 + depth * depth >> !improving)
+        if (!in_check && alpha == beta - 1 && num_quiets_evaluated > O::LmpMoveCount + depth * depth >> !improving)
             break;
     }
     hash_history.pop_back();
@@ -948,7 +973,7 @@ auto iteratively_deepen(Position &pos,
     i32 score = 0;
     for (i32 i = 1; i < 128; ++i) {
         i32 research = 0;
-        for (i32 window = 29 + (score * score >> 14); ++research; window *= 2) {
+        for (i32 window = O::AwInitial + (score * score >> 14); ++research; window *= 2) {
             const i32 alpha = score - window;
             const i32 beta = score + window;
             score = alphabeta(pos,
@@ -1094,6 +1119,9 @@ void set_fen(Position &pos, const string &fen) {
 }
 // minify disable filter delete
 
+#define PRINT_TUNE_OPTION(param) cout << "option name " << #param << " type spin default " << O::param << " min -32768 max 32767\n";
+#define READ_TUNE_OPTION(param) else if (word == #param) { cin >> word; cin >> O::param; }
+
 i32 main(
     // minify enable filter delete
     const i32 argc,
@@ -1179,6 +1207,29 @@ i32 main(
     cout << "option name Threads type spin default " << thread_count << " min 1 max 256\n";
     cout << "option name Hash type spin default " << num_tt_entries * sizeof(TTEntry) / (1024 * 1024)
          << " min 1 max 65536\n";
+
+    PRINT_TUNE_OPTION(TempoMg)
+    PRINT_TUNE_OPTION(TempoEg)
+    PRINT_TUNE_OPTION(IirLimit)
+    PRINT_TUNE_OPTION(RfpDepth)
+    PRINT_TUNE_OPTION(RfpMargin)
+    PRINT_TUNE_OPTION(RazorDepth)
+    PRINT_TUNE_OPTION(RazorMargin)
+    PRINT_TUNE_OPTION(NmpDepthLimit)
+    PRINT_TUNE_OPTION(NmpDepthReduction)
+    PRINT_TUNE_OPTION(NmpExtraDepthDivisor)
+    PRINT_TUNE_OPTION(NmpBetaDistanceDivisor)
+    PRINT_TUNE_OPTION(NmpBetaDistanceLimit)
+    PRINT_TUNE_OPTION(DeltaMargin)
+    PRINT_TUNE_OPTION(FfpDepthLimit)
+    PRINT_TUNE_OPTION(FfpMargin)
+    PRINT_TUNE_OPTION(LmrDepthLimit)
+    PRINT_TUNE_OPTION(LmrMoveLimit)
+    PRINT_TUNE_OPTION(LmrMoveDivisor)
+    PRINT_TUNE_OPTION(LmrDepthDivisor)
+    PRINT_TUNE_OPTION(LmpMoveCount)
+    PRINT_TUNE_OPTION(AwInitial)
+
     // minify disable filter delete
     cout << "uciok\n";
 
@@ -1215,6 +1266,29 @@ i32 main(
                 transposition_table.resize(num_tt_entries);
                 transposition_table.shrink_to_fit();
             }
+
+            READ_TUNE_OPTION(TempoMg)
+            READ_TUNE_OPTION(TempoEg)
+            READ_TUNE_OPTION(IirLimit)
+            READ_TUNE_OPTION(RfpDepth)
+            READ_TUNE_OPTION(RfpMargin)
+            READ_TUNE_OPTION(RazorDepth)
+            READ_TUNE_OPTION(RazorMargin)
+            READ_TUNE_OPTION(NmpDepthLimit)
+            READ_TUNE_OPTION(NmpDepthReduction)
+            READ_TUNE_OPTION(NmpExtraDepthDivisor)
+            READ_TUNE_OPTION(NmpBetaDistanceDivisor)
+            READ_TUNE_OPTION(NmpBetaDistanceLimit)
+            READ_TUNE_OPTION(DeltaMargin)
+            READ_TUNE_OPTION(FfpDepthLimit)
+            READ_TUNE_OPTION(FfpMargin)
+            READ_TUNE_OPTION(LmrDepthLimit)
+            READ_TUNE_OPTION(LmrMoveLimit)
+            READ_TUNE_OPTION(LmrMoveDivisor)
+            READ_TUNE_OPTION(LmrDepthDivisor)
+            READ_TUNE_OPTION(LmpMoveCount)
+            READ_TUNE_OPTION(AwInitial)
+
         }
         // minify disable filter delete
         else if (word == "go") {
