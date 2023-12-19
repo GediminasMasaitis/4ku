@@ -470,7 +470,7 @@ const i32 pawn_attacked_penalty[] = {S(63, 14), S(156, 140)};
 
 [[nodiscard]] i32 eval(Position &pos) {
     // Include side to move bonus
-    i32 score = S(29, 10);
+    i32 score = S(27, 10);
     i32 phase = 0;
 
     for (i32 c = 0; c < 2; ++c) {
@@ -693,10 +693,11 @@ i32 alphabeta(Position &pos,
         // Reverse futility pruning
         if (depth < 8) {
             assert(ply > 0);
-            if (static_eval - 71 * (depth - improving) >= beta)
+            if (static_eval - 69 * (depth - improving) >= beta)
                 return static_eval;
 
-            in_qsearch = static_eval + 238 * depth < alpha;
+            if (depth < 7)
+                in_qsearch = static_eval + 241 * depth < alpha;
         }
 
         // Null move pruning
@@ -709,7 +710,7 @@ i32 alphabeta(Position &pos,
             if (-alphabeta(npos,
                            -beta,
                            -alpha,
-                           depth - 4 - depth / 5 - min((static_eval - beta) / 196, 3),
+                           depth - 4 - depth / 5 - min((static_eval - beta) / 191, 3),
                            ply + 1,
                            // minify enable filter delete
                            nodes,
@@ -771,7 +772,7 @@ i32 alphabeta(Position &pos,
 
         // Forward futility pruning
         if (ply > 0 && depth < 8 && !in_qsearch && !in_check && num_moves_evaluated &&
-            static_eval + 105 * depth + gain < alpha)
+            static_eval + 102 * depth + gain < alpha)
             break;
 
         Position npos = pos;
@@ -948,7 +949,7 @@ auto iteratively_deepen(Position &pos,
     i32 score = 0;
     for (i32 i = 1; i < 128; ++i) {
         i32 research = 0;
-        for (i32 window = 28 + (score * score >> 14); ++research; window *= 2) {
+        for (i32 window = 26 + (score * score >> 14); ++research; window *= 2) {
             const i32 alpha = score - window;
             const i32 beta = score + window;
             score = alphabeta(pos,
