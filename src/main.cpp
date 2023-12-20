@@ -535,7 +535,7 @@ const i32 pawn_attacked_penalty[] = {S(63, 14), S(156, 140)};
                 } else {
                     // Pawn threat
                     if (0x101010101010101ull << sq & ~piece_bb & attacked_by_pawns)
-                        score -= pawn_threat_penalty[p];
+                        score -= pawn_threat_penalty[p - 1];
 
                     // Pawn attacks
                     if (piece_bb & attacked_by_pawns)
