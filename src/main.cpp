@@ -947,8 +947,7 @@ auto iteratively_deepen(Position &pos,
 
     i32 score = 0;
     for (i32 i = 1; i < 128; ++i) {
-        i32 research = 0;
-        for (i32 window = 28 + (score * score >> 14); ++research; window *= 2) {
+        for (i32 window = 28 + (score * score >> 14);; window = inf) {
             const i32 alpha = score - window;
             const i32 beta = score + window;
             score = alphabeta(pos,
@@ -1004,7 +1003,7 @@ auto iteratively_deepen(Position &pos,
         }
 
         // Early exit after completed ply
-        if (2 > research && now() >= start_time + allocated_time / 10)
+        if (now() >= start_time + allocated_time / 10)
             break;
     }
     return stack[0].move;
