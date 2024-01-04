@@ -674,12 +674,21 @@ i32 alphabeta(Position &pos,
     // TT Probing
     TTEntry &tt_entry = transposition_table[tt_key % num_tt_entries];
     Move tt_move{};
+
+    i32 tt_score = tt_entry.score;
     if (tt_entry.key == tt_key) {
         tt_move = tt_entry.move;
-        if (alpha == beta - 1 && tt_entry.depth >= depth && tt_entry.flag != tt_entry.score < beta)
+
+        // Ply correction for TT
+        if (tt_score > mate_score - 256)
+            tt_score -= ply;
+        else if (tt_score < 256 - mate_score)
+            tt_score += ply;
+
+        if (alpha == beta - 1 && tt_entry.depth >= depth && tt_entry.flag != tt_score < beta)
             // If tt_entry.score < beta, tt_entry.flag cannot be Lower (ie must be Upper or Exact).
             // Otherwise, tt_entry.flag cannot be Upper (ie must be Lower or Exact).
-            return tt_entry.score;
+            return tt_score;
     }
     // Internal iterative reduction
     else
@@ -688,10 +697,10 @@ i32 alphabeta(Position &pos,
     i32 static_eval = stack[ply].score = eval(pos);
     const i32 improving = ply > 1 && static_eval > stack[ply - 2].score;
 
-    // If static_eval > tt_entry.score, tt_entry.flag cannot be Lower (ie must be Upper or Exact).
+    // If static_eval > tt_score, tt_entry.flag cannot be Lower (ie must be Upper or Exact).
     // Otherwise, tt_entry.flag cannot be Upper (ie must be Lower or Exact).
-    if (tt_entry.key == tt_key && tt_entry.flag != static_eval > tt_entry.score)
-        static_eval = tt_entry.score;
+    if (tt_entry.key == tt_key && tt_entry.flag != static_eval > tt_score)
+        static_eval = tt_score;
 
     if (in_qsearch && static_eval > alpha) {
         if (static_eval >= beta)
@@ -909,8 +918,15 @@ i32 alphabeta(Position &pos,
     if (best_score == -inf)
         return in_check ? ply - mate_score : 0;
 
+    // Ply correction for TT
+    tt_score = best_score;
+    if (best_score > mate_score - 256)
+        tt_score += ply;
+    if (best_score < 256 - mate_score)
+        tt_score -= ply;
+
     // Save to TT
-    tt_entry = {tt_key, best_move, tt_flag, int16_t(best_score), int16_t(!in_qsearch * depth)};
+    tt_entry = {tt_key, best_move, tt_flag, int16_t(tt_score), int16_t(!in_qsearch * depth)};
 
     return best_score;
 }
