@@ -735,7 +735,7 @@ i32 alphabeta(Position &pos,
     }
 
     // Internal iterative deepening
-    if (depth > 4 && alpha != beta - 1 && tt_move == no_move) {
+    if (depth > 4 && tt_move == no_move && tt_entry.flag != Upper) {
         alphabeta(pos,
                   alpha,
                   beta,
