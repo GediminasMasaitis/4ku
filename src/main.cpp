@@ -666,10 +666,22 @@ i32 alphabeta(Position &pos,
     Move tt_move{};
     if (tt_entry.key == tt_key) {
         tt_move = tt_entry.move;
-        if (alpha == beta - 1 && tt_entry.depth >= depth && tt_entry.flag != tt_entry.score < beta)
-            // If tt_entry.score < beta, tt_entry.flag cannot be Lower (ie must be Upper or Exact).
-            // Otherwise, tt_entry.flag cannot be Upper (ie must be Lower or Exact).
-            return tt_entry.score;
+        // If tt_entry.score < beta, tt_entry.flag cannot be Lower (ie must be Upper or Exact).
+        // Otherwise, tt_entry.flag cannot be Upper (ie must be Lower or Exact).
+        if (alpha == beta - 1 && tt_entry.depth >= depth && tt_entry.flag != tt_entry.score < beta) {
+            Position npos = pos;
+            flip(npos);
+            bool return_tt_score = true;
+            // If the TT move would cause a repetition, do not trust the score
+            if (!(tt_move == no_move) && makemove(npos, tt_move)) {
+                const u64 next_hash = get_hash(pos);
+                for (const u64 old_hash : hash_history)
+                    if (old_hash == next_hash)
+                        return_tt_score = false;
+            }
+            if (return_tt_score)
+                return tt_entry.score;
+        }
     }
     // Internal iterative reduction
     else
