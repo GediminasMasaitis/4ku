@@ -479,6 +479,8 @@ const i32 pawn_attacked_penalty[] = {S(63, 14), S(156, 140)};
         const u64 protected_by_pawns = nw(pawns[0]) | ne(pawns[0]);
         const u64 attacked_by_pawns = se(pawns[1]) | sw(pawns[1]);
         const i32 kings[] = {lsb(pos.colour[0] & pos.pieces[King]), lsb(pos.colour[1] & pos.pieces[King])};
+        u64 opponent_king_zone = king(kings[1], 0);
+        opponent_king_zone |= south(opponent_king_zone) & ~(1ULL << kings[0]);
 
         // Bishop pair
         if (count(pos.colour[0] & pos.pieces[Bishop]) == 2)
@@ -562,7 +564,7 @@ const i32 pawn_attacked_penalty[] = {S(63, 14), S(156, 140)};
                     score += mobilities[p - 1] * count(mobility & ~pos.colour[0] & ~attacked_by_pawns);
 
                     // Attacks on opponent king
-                    score += king_attacks[p - 1] * count(mobility & king(kings[1], 0));
+                    score += king_attacks[p - 1] * count(mobility & opponent_king_zone);
 
                     // Open or semi-open files
                     if (!(0x101010101010101ull << file & pawns[0]))
