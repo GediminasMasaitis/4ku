@@ -856,10 +856,11 @@ i32 alphabeta(Position &pos,
                 for (i32 j = 0; j < num_moves_evaluated; ++j) {
                     const i32 prev_gain =
                         max_material[moves_evaluated[j].promo] + max_material[piece_on(pos, moves_evaluated[j].to)];
-                    hh_table[pos.flipped][!prev_gain][moves_evaluated[j].from][moves_evaluated[j].to] -=
-                        depth * depth +
-                        depth * depth *
-                            hh_table[pos.flipped][!prev_gain][moves_evaluated[j].from][moves_evaluated[j].to] / 512;
+                    if (!gain == !prev_gain)
+                        hh_table[pos.flipped][!gain][moves_evaluated[j].from][moves_evaluated[j].to] -=
+                            depth * depth +
+                            depth * depth *
+                                hh_table[pos.flipped][!gain][moves_evaluated[j].from][moves_evaluated[j].to] / 512;
                 }
                 break;
             }
