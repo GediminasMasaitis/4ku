@@ -674,7 +674,7 @@ i32 alphabeta(Position &pos,
             bool return_tt_score = true;
             // If the TT move would cause a repetition, do not trust the score
             if (!(tt_move == no_move) && makemove(npos, tt_move)) {
-                const u64 next_hash = get_hash(pos);
+                const u64 next_hash = get_hash(npos);
                 for (const u64 old_hash : hash_history)
                     if (old_hash == next_hash)
                         return_tt_score = false;
