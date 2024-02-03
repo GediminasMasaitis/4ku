@@ -634,6 +634,7 @@ i32 alphabeta(Position &pos,
               // minify disable filter delete
               const int64_t stop_time,
               Stack *const stack,
+              const Move &excluded_move,
               i32 &stop,
               vector<u64> &hash_history,
               i32 (&hh_table)[2][2][64][64],
@@ -652,7 +653,7 @@ i32 alphabeta(Position &pos,
     depth += in_check;
 
     i32 in_qsearch = depth <= 0;
-    const u64 tt_key = get_hash(pos);
+    const u64 tt_key = get_hash(pos) ^ excluded_move.from ^ excluded_move.from << 8 ^ excluded_move.promo << 16;
 
     if (ply > 0 && !in_qsearch) {
         // Repetition detection
@@ -716,6 +717,7 @@ i32 alphabeta(Position &pos,
                            // minify disable filter delete
                            stop_time,
                            stack,
+                           excluded_move,
                            stop,
                            hash_history,
                            hh_table,
@@ -762,6 +764,9 @@ i32 alphabeta(Position &pos,
         moves[best_move_index] = moves[i];
         move_scores[best_move_index] = move_scores[i];
 
+        if (move == excluded_move)
+            continue;
+
         // Material gain
         const i32 gain = max_material[move.promo] + max_material[piece_on(pos, move.to)];
 
@@ -782,19 +787,42 @@ i32 alphabeta(Position &pos,
         nodes++;
         // minify disable filter delete
 
+        i32 extension = 0;
         i32 score;
+        if (!in_check && depth > 4 && move == tt_move && excluded_move == no_move && tt_entry.flag != Upper &&
+            abs(tt_entry.score) < 20000) {
+            const i32 singularBeta = tt_entry.score - depth * 2;
+            score = alphabeta(pos,
+                              singularBeta - 1,
+                              singularBeta,
+                              depth / 2,
+                              ply,
+                              // minify enable filter delete
+                              nodes,
+                              // minify disable filter delete
+                              stop_time,
+                              stack,
+                              move,
+                              stop,
+                              hash_history,
+                              hh_table);
+            if (score < singularBeta)
+                extension++;
+        }
+
         if (!num_moves_evaluated)
         full_window:
             score = -alphabeta(npos,
                                -beta,
                                -alpha,
-                               depth - 1,
+                               depth + extension - 1,
                                ply + 1,
                                // minify enable filter delete
                                nodes,
                                // minify disable filter delete
                                stop_time,
                                stack,
+                               no_move,
                                stop,
                                hash_history,
                                hh_table);
@@ -818,6 +846,7 @@ i32 alphabeta(Position &pos,
                                // minify disable filter delete
                                stop_time,
                                stack,
+                               no_move,
                                stop,
                                hash_history,
                                hh_table);
@@ -961,6 +990,7 @@ auto iteratively_deepen(Position &pos,
                               // minify disable filter delete
                               start_time + allocated_time,
                               stack,
+                              no_move,
                               stop,
                               hash_history,
                               hh_table);
