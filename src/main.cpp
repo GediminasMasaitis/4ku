@@ -722,7 +722,7 @@ i32 alphabeta(Position &pos,
                                hh_table,
                                false);
             if (score >= beta)
-                return score < mate_score - 256 ? score : beta;
+                return score;
         }
     }
 
