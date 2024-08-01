@@ -1183,7 +1183,7 @@ i32 main(
     cin >> word;
 
     // Send UCI info
-    cout << "id name 4ku\n";
+    cout << "id name 4ku 5.0\n";
     cout << "id author Team4ku\n";
     // minify enable filter delete
     cout << "option name Threads type spin default " << thread_count << " min 1 max 256\n";
