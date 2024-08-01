@@ -67,7 +67,7 @@ struct [[nodiscard]] Position {
                      0x8100000000000081ull,
                      0x800000000000008ull,
                      0x1000000000000010ull};
-    u64 ep = 0ull;
+    u64 ep = 0;
     i32 flipped = false;
 };
 
@@ -307,7 +307,7 @@ i32 makemove(Position &pos, const Move &move) {
 
     // Castling
     if (piece == King) {
-        const u64 bb = move.to - move.from == 2 ? 0xa0ull : move.from - move.to == 2 ? 0x9ull : 0ull;
+        const u64 bb = move.to - move.from == 2 ? 0xa0 : move.from - move.to == 2 ? 0x9 : 0;
         pos.colour[0] ^= bb;
         pos.pieces[Rook] ^= bb;
     }
@@ -399,7 +399,7 @@ void generate_piece_moves(Move *const movelist,
     const u64 pawns = pos.colour[0] & pos.pieces[Pawn];
     generate_pawn_moves(movelist, num_moves, north(pawns) & ~all & (only_captures ? 0xFF00000000000000ull : ~0ull), -8);
     if (!only_captures)
-        generate_pawn_moves(movelist, num_moves, north(north(pawns & 0xFF00ull) & ~all) & ~all, -16);
+        generate_pawn_moves(movelist, num_moves, north(north(pawns & 0xFF00) & ~all) & ~all, -16);
     generate_pawn_moves(movelist, num_moves, nw(pawns) & (pos.colour[1] | pos.ep), -7);
     generate_pawn_moves(movelist, num_moves, ne(pawns) & (pos.colour[1] | pos.ep), -9);
     generate_piece_moves(movelist, num_moves, pos, Knight, to_mask, knight);
