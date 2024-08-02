@@ -745,7 +745,7 @@ i32 alphabeta(Position &pos,
             for (i32 j = 0; j < num_moves; ++j) {
                 const i32 gain = max_material[moves[j].promo] + max_material[piece_on(pos, moves[j].to)];
                 move_scores[j] = hh_table[pos.flipped][!gain][moves[j].from][moves[j].to] +
-                                 (gain || moves[j] == stack[ply].killer) * 2048 + gain;
+                                 (gain || moves[j] == stack[ply].killer) * 8192 + gain;
             }
 
         // Find best move remaining
@@ -786,7 +786,7 @@ i32 alphabeta(Position &pos,
         i32 score;
         i32 reduction = depth > 3 && num_moves_evaluated > 1
                             ? max(num_moves_evaluated / 13 + depth / 14 + (alpha == beta - 1) + !improving -
-                                      min(max(hh_table[pos.flipped][!gain][move.from][move.to] / 128, -2), 2),
+                                      min(max(hh_table[pos.flipped][!gain][move.from][move.to] / 512, -2), 2),
                                   0)
                             : 0;
 
@@ -843,14 +843,14 @@ i32 alphabeta(Position &pos,
                     stack[ply].killer = move;
 
                 hh_table[pos.flipped][!gain][move.from][move.to] +=
-                    depth * depth - depth * depth * hh_table[pos.flipped][!gain][move.from][move.to] / 512;
+                    depth * depth - depth * depth * hh_table[pos.flipped][!gain][move.from][move.to] / 2048;
                 for (i32 j = 0; j < num_moves_evaluated; ++j) {
                     const i32 prev_gain =
                         max_material[moves_evaluated[j].promo] + max_material[piece_on(pos, moves_evaluated[j].to)];
                     hh_table[pos.flipped][!prev_gain][moves_evaluated[j].from][moves_evaluated[j].to] -=
                         depth * depth +
                         depth * depth *
-                            hh_table[pos.flipped][!prev_gain][moves_evaluated[j].from][moves_evaluated[j].to] / 512;
+                            hh_table[pos.flipped][!prev_gain][moves_evaluated[j].from][moves_evaluated[j].to] / 2048;
                 }
                 break;
             }
