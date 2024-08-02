@@ -882,8 +882,7 @@ i32 alphabeta(Position &pos,
     if (!in_qsearch && !in_check && (best_move.from == best_move.to || None == piece_on(pos, best_move.to)) &&
         !(tt_flag == Lower && best_score <= static_eval) && !(tt_flag == Upper && best_score >= static_eval)) {
         i32 &e = ch_table[pos.flipped][hashp % 16384];
-        i32 nw = min(16, 1 + depth);
-        e = min(max((e * (256 - nw) + nw * (best_score - static_eval) * 256) / 256, -8192), 8192);
+        e = min(max((e * 255 + (best_score - static_eval) * 256) / 256, -8192), 8192);
     }
 
     // Save to TT
