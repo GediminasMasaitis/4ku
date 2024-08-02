@@ -681,7 +681,7 @@ i32 alphabeta(Position &pos,
     else
         depth -= depth > 3;
 
-    i32 static_eval = stack[ply].score = eval(pos) + ch_table[pos.flipped][hashp % 16384] / 256;
+    i32 static_eval = stack[ply].score = eval(pos) + ch_table[pos.flipped][hashp % 16384] / 64;
     const i32 improving = ply > 1 && static_eval > stack[ply - 2].score;
 
     // If static_eval > tt_entry.score, tt_entry.flag cannot be Lower (ie must be Upper or Exact).
@@ -883,7 +883,7 @@ i32 alphabeta(Position &pos,
         !(tt_flag == Lower && best_score <= static_eval) && !(tt_flag == Upper && best_score >= static_eval)) {
         i32 &e = ch_table[pos.flipped][hashp % 16384];
         i32 nw = min(16, 1 + depth);
-        e = min(max((e * (256 - nw) + nw * (best_score - static_eval) * 256) / 256, -8192), 8192);
+        e = min(max((e * (256 - nw) + nw * (best_score - static_eval) * 256) / 64, -2048), 2048);
     }
 
     // Save to TT
