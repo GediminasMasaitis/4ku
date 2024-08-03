@@ -681,7 +681,8 @@ i32 alphabeta(Position &pos,
     else
         depth -= depth > 3;
 
-    i32 static_eval = stack[ply].score = eval(pos) + ch_table[pos.flipped][hashp % 16384] / 256;
+    i32 &ch_entry = ch_table[pos.flipped][hashp % 16384];
+    i32 static_eval = stack[ply].score = eval(pos) + ch_entry / 256;
     const i32 improving = ply > 1 && static_eval > stack[ply - 2].score;
 
     // If static_eval > tt_entry.score, tt_entry.flag cannot be Lower (ie must be Upper or Exact).
@@ -880,10 +881,8 @@ i32 alphabeta(Position &pos,
 
     // Update correction history table
     if (!in_qsearch && !in_check && (best_move.from == best_move.to || None == piece_on(pos, best_move.to)) &&
-        !(tt_flag == Lower && best_score <= static_eval) && !(tt_flag == Upper && best_score >= static_eval)) {
-        i32 &e = ch_table[pos.flipped][hashp % 16384];
-        e = min(max((e * (256 - depth) + depth * (best_score - static_eval) * 256) / 256, -8192), 8192);
-    }
+        !(tt_flag == Lower && best_score <= static_eval) && !(tt_flag == Upper && best_score >= static_eval))
+        ch_entry = min(max((ch_entry * (256 - depth) + depth * (best_score - static_eval) * 256) / 256, -8192), 8192);
 
     // Save to TT
     tt_entry = {tt_key, best_move, tt_flag, int16_t(best_score), int16_t(!in_qsearch * depth)};
