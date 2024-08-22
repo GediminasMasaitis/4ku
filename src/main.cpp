@@ -161,8 +161,7 @@ vector<TTEntry> transposition_table;
     return south(east(bb));
 }
 
-template <typename F>
-[[nodiscard]] u64 ray(const i32 sq, const u64 blockers, F f) {
+[[nodiscard]] u64 ray(const i32 sq, const u64 blockers, const auto f) {
     assert(sq >= 0);
     assert(sq < 64);
     u64 mask = f(1ull << sq);
@@ -366,13 +365,12 @@ void generate_pawn_moves(Move *const movelist, i32 &num_moves, u64 to_mask, cons
     }
 }
 
-template <typename F>
 void generate_piece_moves(Move *const movelist,
                           i32 &num_moves,
                           const Position &pos,
                           const i32 piece,
                           const u64 to_mask,
-                          F f) {
+                          const auto f) {
     assert(piece == Knight || piece == Bishop || piece == Rook || piece == Queen || piece == King);
     u64 copy = pos.colour[0] & pos.pieces[piece];
     while (copy) {
