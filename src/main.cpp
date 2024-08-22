@@ -637,7 +637,7 @@ i32 alphabeta(Position &pos,
               // minify enable filter delete
               u64 &nodes,
               // minify disable filter delete
-              const int64_t stop_time,
+              const u64 stop_time,
               Stack *const stack,
               i32 &stop,
               vector<u64> &hash_history,
