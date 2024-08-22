@@ -1273,7 +1273,7 @@ i32 main(
                                            0,
                                            total_nodes,
                                            // minify disable filter delete
-                                           1 << 30,
+                                           1 << 26,
                                            start);
                     });
                 best_move = iteratively_deepen(pos,
