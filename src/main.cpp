@@ -872,6 +872,7 @@ i32 alphabeta(Position &pos,
         if (!in_check && alpha == beta - 1 && num_quiets_evaluated > 1 + depth * depth >> !improving)
             break;
     }
+
     hash_history.pop_back();
 
     // Return mate or draw scores if no moves found
@@ -1016,6 +1017,7 @@ auto iteratively_deepen(Position &pos,
         if (4 > research && now() >= start_time + allocated_time * (2 * research - 1) / 10)
             break;
     }
+
     return stack[0].move;
 }
 
