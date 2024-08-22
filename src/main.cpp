@@ -1012,6 +1012,9 @@ auto iteratively_deepen(Position &pos,
         }
 
         // Early exit after completed ply
+        assert(research >= 0);
+        assert(allocated_time * (2 * research - 1) / 10 >= 0);
+        assert(start_time + allocated_time * (2 * research - 1) / 10 >= start_time);
         if (4 > research && now() >= start_time + allocated_time * (2 * research - 1) / 10)
             break;
     }
