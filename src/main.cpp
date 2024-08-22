@@ -929,7 +929,7 @@ auto iteratively_deepen(Position &pos,
                         const i32 bench_depth,
                         u64 &total_nodes,
                         // minify disable filter delete
-                        const i32 allocated_time,
+                        const u64 allocated_time,
                         const u64 start_time) {
     Stack stack[128] = {};
     // minify enable filter delete
