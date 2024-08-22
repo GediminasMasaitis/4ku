@@ -1205,6 +1205,7 @@ i32 main(
             break;
         else if (word == "ucinewgame") {
             memset(hh_table, 0, sizeof(hh_table));
+            memset(ch_table, 0, sizeof(ch_table));
             memset(transposition_table.data(), 0, sizeof(TTEntry) * transposition_table.size());
         } else if (word == "isready")
             cout << "readyok\n";
