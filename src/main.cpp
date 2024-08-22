@@ -1254,38 +1254,39 @@ i32 main(
             const u64 start = now();
 
             // Lazy SMP
-            vector<thread> threads;
-            i32 stop = false;
-            for (i32 i = 1; i < thread_count; ++i)
-                threads.emplace_back([=, &stop]() mutable {
-                    iteratively_deepen(pos,
-                                       stop,
-                                       hash_history,
-                                       hh_table,
-                                       ch_table,
-                                       // minify enable filter delete
-                                       i,
-                                       0,
-                                       total_nodes,
-                                       // minify disable filter delete
-                                       1 << 30,
-                                       start);
-                });
-            const Move best_move = iteratively_deepen(pos,
-                                                      stop,
-                                                      hash_history,
-                                                      hh_table,
-                                                      ch_table,
-                                                      // minify enable filter delete
-                                                      0,
-                                                      0,
-                                                      total_nodes,
-                                                      // minify disable filter delete
-                                                      time_left / 3,
-                                                      start);
-            stop = true;
-            for (i32 i = 1; i < thread_count; ++i)
-                threads[i - 1].join();
+            Move best_move;
+            {
+                vector<jthread> threads;
+                i32 stop = false;
+                for (i32 i = 1; i < thread_count; ++i)
+                    threads.emplace_back([=, &stop]() mutable {
+                        iteratively_deepen(pos,
+                                           stop,
+                                           hash_history,
+                                           hh_table,
+                                           ch_table,
+                                           // minify enable filter delete
+                                           i,
+                                           0,
+                                           total_nodes,
+                                           // minify disable filter delete
+                                           1 << 30,
+                                           start);
+                    });
+                best_move = iteratively_deepen(pos,
+                                               stop,
+                                               hash_history,
+                                               hh_table,
+                                               ch_table,
+                                               // minify enable filter delete
+                                               0,
+                                               0,
+                                               total_nodes,
+                                               // minify disable filter delete
+                                               time_left / 3,
+                                               start);
+                stop = true;
+            }
             cout << "bestmove " << move_str(best_move, pos.flipped) << "\n";
         } else if (word == "position") {
             // Set to startpos
