@@ -942,7 +942,7 @@ auto iteratively_deepen(Position &pos,
                         i32 (&hh_table)[2][2][64][64],
                         i32 (&ch_table)[2][16384],
                         // minify enable filter delete
-                        i32 thread_id,
+                        const i32 thread_id,
                         const i32 bench_depth,
                         u64 &total_nodes,
                         // minify disable filter delete
