@@ -807,7 +807,7 @@ i32 alphabeta(Position &pos,
                reduction > 0)
             reduction = 0;
 
-        if (!num_moves_evaluated || score > alpha && score < beta)
+        if (!num_moves_evaluated || score > alpha)
             score = -alphabeta(npos,
                                -beta,
                                -alpha,
