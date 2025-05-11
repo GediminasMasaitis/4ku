@@ -784,7 +784,7 @@ i32 alphabeta(Position &pos,
         // minify disable filter delete
 
         i32 score;
-        i32 reduction = depth > 3 && num_moves_evaluated > 1
+        i32 reduction = depth > 1 && num_moves_evaluated > 6
                             ? max(num_moves_evaluated / 13 + depth / 14 + (alpha == beta - 1) + !improving -
                                       min(max(hh_table[pos.flipped][!gain][move.from][move.to] / 128, -2), 2),
                                   0)
