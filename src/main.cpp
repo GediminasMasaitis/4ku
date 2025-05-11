@@ -655,7 +655,7 @@ i32 alphabeta(Position &pos,
     i32 in_qsearch = depth <= 0;
     const u64 tt_key = get_hash(pos);
 
-    if (ply > 0 && !in_qsearch) {
+    if (ply > 0) {
         // Repetition detection
         for (const u64 old_hash : hash_history)
             if (old_hash == tt_key)
