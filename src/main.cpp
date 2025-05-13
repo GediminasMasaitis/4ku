@@ -638,7 +638,7 @@ i32 alphabeta(Position &pos,
               i32 &stop,
               vector<u64> &hash_history,
               i32 (&hh_table)[2][2][64][64],
-              const i32 do_null = true) {
+              const i32 do_null) {
     assert(alpha < beta);
     assert(ply >= 0);
     assert(stack != nullptr);
@@ -655,7 +655,7 @@ i32 alphabeta(Position &pos,
     i32 in_qsearch = depth <= 0;
     const u64 tt_key = get_hash(pos);
 
-    if (ply > 0 && !in_qsearch) {
+    if (do_null && !in_qsearch) {
         // Repetition detection
         for (const u64 old_hash : hash_history)
             if (old_hash == tt_key)
@@ -803,7 +803,8 @@ i32 alphabeta(Position &pos,
                                    stack,
                                    stop,
                                    hash_history,
-                                   hh_table)) > alpha &&
+                                   hh_table,
+                                   true)) > alpha &&
                reduction > 0)
             reduction = 0;
 
@@ -820,7 +821,8 @@ i32 alphabeta(Position &pos,
                                stack,
                                stop,
                                hash_history,
-                               hh_table);
+                               hh_table,
+                               true);
 
         // Exit early if out of time
         if (depth > 4 && (stop || now() >= stop_time)) {
@@ -954,7 +956,8 @@ auto iteratively_deepen(Position &pos,
                               stack,
                               stop,
                               hash_history,
-                              hh_table);
+                              hh_table,
+                              false);
 
             // Hard time limit exceeded
             if (stop || now() >= start_time + allocated_time)
