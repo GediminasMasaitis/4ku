@@ -74,9 +74,10 @@ struct Move {
     u8 from = 0;
     u8 to = 0;
     u8 promo = 0;
+    u8 captures = 0;
 };
 
-static_assert(sizeof(Move) == 3);
+static_assert(sizeof(Move) == 4);
 
 const Move no_move{};
 
@@ -105,13 +106,13 @@ struct [[nodiscard]] TTEntry {
     int16_t depth;
 };
 
-static_assert(sizeof(TTEntry) == 16);
+static_assert(sizeof(TTEntry) == 24);
 
 u64 diag_mask[64];
 u64 keys[848];
 
 // Engine options
-u64 num_tt_entries = 64ull << 16;  // The first value is the size in megabytes
+u64 num_tt_entries = (64ull << 20) / 24;  // The first value is the size in megabytes
 i32 thread_count = 1;
 
 vector<TTEntry> transposition_table;
@@ -279,7 +280,8 @@ i32 makemove(Position &pos, const Move &move) {
 
     const i32 piece = piece_on(pos, move.from);
     assert(piece != None);
-    const i32 captured = piece_on(pos, move.to);
+    const i32 captured = move.captures;
+    assert(captured == move.captures);
     assert(captured != King);
 
     // Move the piece
@@ -346,7 +348,7 @@ i32 makemove(Position &pos, const Move &move) {
     return !is_attacked(pos, lsb(pos.colour[1] & pos.pieces[King]), false);
 }
 
-void generate_pawn_moves(Move *const movelist, i32 &num_moves, u64 to_mask, const i32 offset) {
+void generate_pawn_moves(Move *const movelist, i32 &num_moves, const Position &pos, u64 to_mask, const i32 offset) {
     while (to_mask) {
         const u8 to = lsb(to_mask);
         to_mask &= to_mask - 1;
@@ -355,13 +357,14 @@ void generate_pawn_moves(Move *const movelist, i32 &num_moves, u64 to_mask, cons
         assert(from < 64);
         assert(to >= 0);
         assert(to < 64);
+        const u8 captures = piece_on(pos, to);
         if (to > 55) {
-            movelist[num_moves++] = Move{from, to, Queen};
-            movelist[num_moves++] = Move{from, to, Rook};
-            movelist[num_moves++] = Move{from, to, Bishop};
-            movelist[num_moves++] = Move{from, to, Knight};
+            movelist[num_moves++] = Move{from, to, Queen, captures};
+            movelist[num_moves++] = Move{from, to, Rook, captures};
+            movelist[num_moves++] = Move{from, to, Bishop, captures};
+            movelist[num_moves++] = Move{from, to, Knight, captures};
         } else
-            movelist[num_moves++] = Move{from, to, None};
+            movelist[num_moves++] = Move{from, to, None, captures};
     }
 }
 
@@ -385,7 +388,8 @@ void generate_piece_moves(Move *const movelist,
             assert(to >= 0);
             assert(to < 64);
             moves &= moves - 1;
-            movelist[num_moves++] = Move{fr, to, None};
+            const u8 captures = piece_on(pos, to);
+            movelist[num_moves++] = Move{fr, to, None, captures};
             assert(num_moves < 256);
         }
     }
@@ -396,11 +400,12 @@ void generate_piece_moves(Move *const movelist,
     const u64 all = pos.colour[0] | pos.colour[1];
     const u64 to_mask = only_captures ? pos.colour[1] : ~pos.colour[0];
     const u64 pawns = pos.colour[0] & pos.pieces[Pawn];
-    generate_pawn_moves(movelist, num_moves, north(pawns) & ~all & (only_captures ? 0xFF00000000000000ull : ~0ull), -8);
+    generate_pawn_moves(
+        movelist, num_moves, pos, north(pawns) & ~all & (only_captures ? 0xFF00000000000000ull : ~0ull), -8);
     if (!only_captures)
-        generate_pawn_moves(movelist, num_moves, north(north(pawns & 0xFF00ull) & ~all) & ~all, -16);
-    generate_pawn_moves(movelist, num_moves, nw(pawns) & (pos.colour[1] | pos.ep), -7);
-    generate_pawn_moves(movelist, num_moves, ne(pawns) & (pos.colour[1] | pos.ep), -9);
+        generate_pawn_moves(movelist, num_moves, pos, north(north(pawns & 0xFF00ull) & ~all) & ~all, -16);
+    generate_pawn_moves(movelist, num_moves, pos, nw(pawns) & (pos.colour[1] | pos.ep), -7);
+    generate_pawn_moves(movelist, num_moves, pos, ne(pawns) & (pos.colour[1] | pos.ep), -9);
     generate_piece_moves(movelist, num_moves, pos, Knight, to_mask, knight);
     generate_piece_moves(movelist, num_moves, pos, Bishop, to_mask, bishop);
     generate_piece_moves(movelist, num_moves, pos, Rook, to_mask, rook);
@@ -408,9 +413,9 @@ void generate_piece_moves(Move *const movelist,
     generate_piece_moves(movelist, num_moves, pos, Queen, to_mask, bishop);
     generate_piece_moves(movelist, num_moves, pos, King, to_mask, king);
     if (!only_captures && pos.castling[0] && !(all & 0x60ull) && !is_attacked(pos, 4) && !is_attacked(pos, 5))
-        movelist[num_moves++] = Move{4, 6, None};
+        movelist[num_moves++] = Move{4, 6, None, None};
     if (!only_captures && pos.castling[1] && !(all & 0xEull) && !is_attacked(pos, 4) && !is_attacked(pos, 3))
-        movelist[num_moves++] = Move{4, 2, None};
+        movelist[num_moves++] = Move{4, 2, None, None};
     assert(num_moves < 256);
     return num_moves;
 }
@@ -743,7 +748,8 @@ i32 alphabeta(Position &pos,
         // then we'll use that first and delay sorting one iteration.
         if (i == !(no_move == tt_move))
             for (i32 j = 0; j < num_moves; ++j) {
-                const i32 gain = max_material[moves[j].promo] + max_material[piece_on(pos, moves[j].to)];
+                assert(moves[j].captures == piece_on(pos, moves[j].to));
+                const i32 gain = max_material[moves[j].promo] + max_material[moves[j].captures];
                 move_scores[j] = hh_table[pos.flipped][!gain][moves[j].from][moves[j].to] +
                                  (gain || moves[j] == stack[ply].killer) * 2048 + gain;
             }
@@ -764,7 +770,7 @@ i32 alphabeta(Position &pos,
         move_scores[best_move_index] = move_scores[i];
 
         // Material gain
-        const i32 gain = max_material[move.promo] + max_material[piece_on(pos, move.to)];
+        const i32 gain = max_material[move.promo] + max_material[move.captures];
 
         // Delta pruning
         if (in_qsearch && !in_check && static_eval + 50 + gain < alpha)
@@ -846,7 +852,7 @@ i32 alphabeta(Position &pos,
                     depth * depth - depth * depth * hh_table[pos.flipped][!gain][move.from][move.to] / 512;
                 for (i32 j = 0; j < num_moves_evaluated; ++j) {
                     const i32 prev_gain =
-                        max_material[moves_evaluated[j].promo] + max_material[piece_on(pos, moves_evaluated[j].to)];
+                        max_material[moves_evaluated[j].promo] + max_material[moves_evaluated[j].captures];
                     hh_table[pos.flipped][!prev_gain][moves_evaluated[j].from][moves_evaluated[j].to] -=
                         depth * depth +
                         depth * depth *
@@ -1317,7 +1323,8 @@ i32 main(
             const i32 num_moves = movegen(pos, moves, false);
             for (i32 i = 0; i < num_moves; ++i) {
                 if (word == move_str(moves[i], pos.flipped)) {
-                    if (piece_on(pos, moves[i].to) == None && piece_on(pos, moves[i].from))
+                    assert(moves[i].captures == piece_on(pos, moves[i].to));
+                    if (moves[i].captures == None && piece_on(pos, moves[i].from))
                         hash_history.emplace_back(get_hash(pos));
                     else
                         hash_history.clear();
