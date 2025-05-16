@@ -407,9 +407,9 @@ void generate_piece_moves(Move *const movelist,
     generate_piece_moves(movelist, num_moves, pos, Queen, to_mask, rook);
     generate_piece_moves(movelist, num_moves, pos, Queen, to_mask, bishop);
     generate_piece_moves(movelist, num_moves, pos, King, to_mask, king);
-    if (!only_captures && pos.castling[0] && !(all & 0x60ull) && !is_attacked(pos, 4) && !is_attacked(pos, 5))
+    if (pos.castling[0] && !(all & 0x60ull) && !is_attacked(pos, 4) && !is_attacked(pos, 5))
         movelist[num_moves++] = Move{4, 6, None};
-    if (!only_captures && pos.castling[1] && !(all & 0xEull) && !is_attacked(pos, 4) && !is_attacked(pos, 3))
+    if (pos.castling[1] && !(all & 0xEull) && !is_attacked(pos, 4) && !is_attacked(pos, 3))
         movelist[num_moves++] = Move{4, 2, None};
     assert(num_moves < 256);
     return num_moves;
