@@ -98,20 +98,20 @@ enum
 };
 
 struct [[nodiscard]] TTEntry {
-    u64 key;
+    i32 key;
     Move move;
     u8 flag;
     int16_t score;
     int16_t depth;
 };
 
-static_assert(sizeof(TTEntry) == 16);
+static_assert(sizeof(TTEntry) == 12);
 
 u64 diag_mask[64];
 u64 keys[848];
 
 // Engine options
-u64 num_tt_entries = 64ull << 16;  // The first value is the size in megabytes
+u64 num_tt_entries = (64ull << 20) / 12;  // The first value is the size in megabytes
 i32 thread_count = 1;
 
 vector<TTEntry> transposition_table;
@@ -664,8 +664,9 @@ i32 alphabeta(Position &pos,
 
     // TT Probing
     TTEntry &tt_entry = transposition_table[tt_key % num_tt_entries];
+    const i32 partial_hash = tt_key / num_tt_entries;
     Move tt_move{};
-    if (tt_entry.key == tt_key) {
+    if (tt_entry.key == partial_hash) {
         tt_move = tt_entry.move;
         if (alpha == beta - 1 && tt_entry.depth >= depth && tt_entry.flag != tt_entry.score < beta)
             // If tt_entry.score < beta, tt_entry.flag cannot be Lower (ie must be Upper or Exact).
@@ -681,7 +682,7 @@ i32 alphabeta(Position &pos,
 
     // If static_eval > tt_entry.score, tt_entry.flag cannot be Lower (ie must be Upper or Exact).
     // Otherwise, tt_entry.flag cannot be Upper (ie must be Lower or Exact).
-    if (tt_entry.key == tt_key && tt_entry.flag != static_eval > tt_entry.score)
+    if (tt_entry.key == partial_hash && tt_entry.flag != static_eval > tt_entry.score)
         static_eval = tt_entry.score;
 
     if (in_qsearch && static_eval > alpha) {
@@ -871,7 +872,7 @@ i32 alphabeta(Position &pos,
         return in_check ? ply - mate_score : 0;
 
     // Save to TT
-    tt_entry = {tt_key, best_move, tt_flag, int16_t(best_score), int16_t(!in_qsearch * depth)};
+    tt_entry = {partial_hash, best_move, tt_flag, int16_t(best_score), int16_t(!in_qsearch * depth)};
 
     return best_score;
 }
